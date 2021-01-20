@@ -21,15 +21,8 @@ void use_arguments(int argc, char * arg[]) {
                     std::cout<<"Test passed\n";
                 }
                 else {
-                    for (int j = 1; j < i; j++) {
-                        if (arg[j] == (std::string)"--test") {
-                            std::cerr<<"Error: Test argument has been seen already\n";
-                            exit(1);
-                        }
-                        else {
-                            std::cout<<"Test passed\n";
-                        }
-                    }
+                    std::cerr<<"Error: Test argument has been seen already\n";
+                    exit(1);
                 }
             }
             else {
