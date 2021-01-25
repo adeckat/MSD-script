@@ -4,8 +4,11 @@
 //
 //  Created by Nga Huynh on 1/19/21.
 //
-
+#define CATCH_CONFIG_RUNNER
+#include "catch.h"
+#include "expr.cpp"
 #include "cmdline.h"
+
 void use_arguments(int argc, char * arg[]) {
     if (argc == 1) {
         return;
@@ -18,7 +21,10 @@ void use_arguments(int argc, char * arg[]) {
             }
             if (arg[i] == (std::string)"--test") {
                 if (i == 1) {
-                    std::cout<<"Test passed\n";
+                    int result = Catch::Session().run();
+                    if (result != 0) {
+                        exit(1);
+                    }
                 }
                 else {
                     std::cerr<<"Error: Test argument has been seen already\n";
