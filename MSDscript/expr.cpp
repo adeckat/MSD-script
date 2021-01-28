@@ -29,7 +29,7 @@ bool Num::has_variable() {
     return false;
 }
 Expr *Num::subst(std::string s, Expr *other) {
-    return new Num(this->val);
+    return this;
 }
 
 //Variable and its implementation
@@ -46,7 +46,7 @@ bool Variables::equals(Expr *other) {
     }
 }
 int Variables::interp() {
-    throw std::runtime_error("This is a variable");
+    throw std::runtime_error("Variable(s) exist(s) in this expression");
 }
 bool Variables::has_variable() {
     return true;
@@ -56,7 +56,7 @@ Expr *Variables::subst(std::string s, Expr *other) {
         return other;
     }
     else {
-        return new Variables(this->var);
+        return this;
     }
 }
 
@@ -75,41 +75,15 @@ bool Add::equals(Expr *other) {
     }
 }
 int Add::interp() {
-    if (this->lhs->has_variable() || this->rhs->has_variable()) {
-        throw std::runtime_error("Variable(s) exist(s) in this expression");
-    }
-    else {
-        int sum;
-        sum = this->lhs->interp() + this->rhs->interp();
-        return sum;
-    }
+    return (this->lhs->interp() + this->rhs->interp());
 }
 bool Add::has_variable() {
-    if (this->lhs->has_variable() || this->rhs->has_variable()) {
-        return true;
-    }
-    else {
-        return false;
-    }
+    return (this->lhs->has_variable() || this->rhs->has_variable());
 }
 Expr *Add::subst(std::string s, Expr *other) {
-    if (!(this->lhs->has_variable()) && !(this->rhs->has_variable())) {
-        return new Add(this->lhs, this->rhs);
-    }
-    else {
-        if ((this->lhs->subst(s, other)->equals(other)) && this->rhs->subst(s, other)->equals(other)) {
-            return new Add(other, other);
-        }
-        else if (this->lhs->subst(s, other)->equals(other)) {
-            return new Add(other, this->rhs);
-        }
-        else if (this->rhs->subst(s, other)->equals(other)) {
-            return new Add(this->lhs, other);
-        }
-        else {
-            return new Add(this->lhs, this->rhs);
-        }
-    }
+    Expr *other_lhs = this->lhs->subst(s, other);
+    Expr *other_rhs = this->rhs->subst(s, other);
+    return new Add(other_lhs, other_rhs);
 }
 
 //Mult and its implementation
@@ -127,41 +101,15 @@ bool Mult::equals(Expr *other) {
     }
 }
 int Mult::interp() {
-    if (this->lhs->has_variable() || this->rhs->has_variable()) {
-        throw std::runtime_error("Variable(s) exist(s) in this expression");
-    }
-    else {
-        int prod;
-        prod = this->lhs->interp() * this->rhs->interp();
-        return prod;
-    }
+    return (this->lhs->interp() * this->rhs->interp());
 }
 bool Mult::has_variable() {
-    if (this->lhs->has_variable() || this->rhs->has_variable()) {
-        return true;
-    }
-    else {
-        return false;
-    }
+    return (this->lhs->has_variable() || this->rhs->has_variable());
 }
 Expr *Mult::subst(std::string s, Expr *other) {
-    if (!(this->lhs->has_variable()) && !(this->rhs->has_variable())) {
-        return new Mult(this->lhs, this->rhs);
-    }
-    else {
-        if ((this->lhs->subst(s, other)->equals(other)) && this->rhs->subst(s, other)->equals(other)) {
-            return new Mult(other, other);
-        }
-        else if (this->lhs->subst(s, other)->equals(other)) {
-            return new Mult(other, this->rhs);
-        }
-        else if (this->rhs->subst(s, other)->equals(other)) {
-            return new Mult(this->lhs, other);
-        }
-        else {
-            return new Mult(this->lhs, this->rhs);
-        }
-    }
+    Expr *other_lhs = this->lhs->subst(s, other);
+    Expr *other_rhs = this->rhs->subst(s, other);
+    return new Mult(other_lhs, other_rhs);
 }
 
 TEST_CASE("equals") {
@@ -203,8 +151,8 @@ TEST_CASE("interp") {
     CHECK(val1->interp() == 17);
     CHECK(val2->interp() == 24);
     
-    CHECK_THROWS_WITH(var1->interp(), "This is a variable");
-    CHECK_THROWS_WITH(var2->interp(), "This is a variable");
+    CHECK_THROWS_WITH(var1->interp(), "Variable(s) exist(s) in this expression");
+    CHECK_THROWS_WITH(var2->interp(), "Variable(s) exist(s) in this expression");
     
     CHECK((new Add(val1, val2))->interp() == 41);
     CHECK((new Add(val1, val3))->interp() == 34);
@@ -236,11 +184,16 @@ TEST_CASE("has_variables") {
     CHECK((new Add(val2, var2))->has_variable() == true);
     CHECK((new Add(var1, var2))->has_variable() == true);
     CHECK((new Add(val1, val2))->has_variable() == false);
+    CHECK((new Add(var1, new Add(val2, var2)))->has_variable() == true);
+    CHECK((new Add(val1, new Add(val2, val3)))->has_variable() == false);
+    
     
     CHECK((new Mult(var1, val1))->has_variable() == true);
     CHECK((new Mult(val2, var2))->has_variable() == true);
     CHECK((new Mult(var1, var2))->has_variable() == true);
     CHECK((new Mult(val1, val2))->has_variable() == false);
+    CHECK((new Mult(new Mult(val2, var2), var1))->has_variable() == true);
+    CHECK((new Mult(new Mult(val2, val3), val1))->has_variable() == false);
 }
 
 TEST_CASE("subst") {
@@ -248,6 +201,7 @@ TEST_CASE("subst") {
     Num* val2 = new Num(24);
     Variables* var1 = new Variables("x");
     Variables* var2 = new Variables("y");
+    Variables* var3 = new Variables("X");
     
     CHECK(val1->subst("x", new Num(24))->equals(val1));
     CHECK(val2->subst("y", new Num(17))->equals(val2));
@@ -266,6 +220,10 @@ TEST_CASE("subst") {
           ->equals(new Add(new Variables("y"), new Variables("y"))));
     CHECK((new Add(new Variables("y"), new Variables("y")))->subst("Y", new Variables("X"))
           ->equals(new Add(new Variables("y"), new Variables("y"))));
+    CHECK((new Add(var1, (new Add(val2, var2))))->subst("x", new Variables("X"))
+          ->equals(new Add(new Variables("X"), new Add(val2, var2))));
+    CHECK((new Add(var1, (new Add(val2, var1))))->subst("x", new Variables("X"))
+          ->equals(new Add(new Variables("X"), new Add(val2, new Variables("X")))));
     
     CHECK((new Mult(val1, val2))->subst("x", new Variables("x"))->equals(new Mult(val1, val2)));
     CHECK((new Mult(var1, val1))->subst("x", new Variables("y"))
@@ -276,5 +234,9 @@ TEST_CASE("subst") {
           ->equals(new Mult(var2, var2)));
     CHECK((new Mult(var2, var2))->subst("Y", new Variables("X"))
           ->equals(new Mult(var2, var2)));
+    CHECK((new Mult(new Mult(val2, var2), var1))->subst("x", new Variables("X"))
+          ->equals(new Mult(new Mult(val2, var2), var3)));
+    CHECK((new Mult(new Mult(val2, var1), var1))->subst("x", new Variables("X"))
+          ->equals(new Mult(new Mult(val2, var3), var3)));
 }
 
