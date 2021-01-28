@@ -169,41 +169,94 @@ TEST_CASE("equals") {
     Num* val2 = new Num(24);
     Num* val3 = new Num(17);
     Num* val4 = new Num(24);
-
     Variables* var1 = new Variables("x");
     Variables* var2 = new Variables("y");
-    Variables* var3 = new Variables("X");
     
     CHECK(val1->equals(new Num(17)) == true);
     CHECK(val3->equals(new Num(24)) == false);
-    CHECK(val1->interp() == 17);
-    CHECK(val2->interp() == 24);
-    CHECK(val3->has_variable() == false);
-    CHECK(val4->has_variable() == false);
-    CHECK(val1->subst("x", new Num(24))->equals(val1));
-    CHECK(val2->subst("y", new Num(17))->equals(val2));
     
     CHECK(var1->equals(new Variables("x")) == true);
     CHECK(var1->equals(new Variables("X")) == false);
     CHECK(var1->equals(var2) == false);
-    CHECK_THROWS_WITH(var1->interp(), "This is a variable");
-    CHECK_THROWS_WITH(var2->interp(), "This is a variable");
-    CHECK(var1->has_variable() == true);
-    CHECK(var3->has_variable() == true);
-    CHECK(var1->subst("x", new Variables("y"))->equals(var2));
-    CHECK(var2->subst("x", new Variables("X"))->equals(var2));
-    CHECK(var1->subst("x", new Num(17))->equals(val1));
-    CHECK(var2->subst("y", new Add(new Num(17), new Num(24)))->equals(new Add(val1, val2)));
-    
+
     CHECK(val1->equals(var1) == false);
     
     CHECK((new Add(val1, val2))->equals(new Add(val3, val4)) == true);
     CHECK((new Add(val1, val2))->equals(new Add(val2, val1)) == false);
     CHECK((new Add(val3, val4))->equals(new Add(val4, val3)) == false);
+    
+    CHECK((new Mult(val1, val2))->equals(new Mult(val3, val4)) == true);
+    CHECK((new Mult(val1, val2))->equals(new Mult(val2, val1)) == false);
+    CHECK((new Mult(val3, val4))->equals(new Mult(val4, val3)) == false);
+    
+    CHECK((new Add(val1, val2))->equals(new Mult(val1, val2)) == false);
+    CHECK((new Add(val1, val2))->equals(new Mult(val3, val4)) == false);
+}
+
+TEST_CASE("interp") {
+    Num* val1 = new Num(17);
+    Num* val2 = new Num(24);
+    Num* val3 = new Num(17);
+    Variables* var1 = new Variables("x");
+    Variables* var2 = new Variables("y");
+    
+    CHECK(val1->interp() == 17);
+    CHECK(val2->interp() == 24);
+    
+    CHECK_THROWS_WITH(var1->interp(), "This is a variable");
+    CHECK_THROWS_WITH(var2->interp(), "This is a variable");
+    
     CHECK((new Add(val1, val2))->interp() == 41);
     CHECK((new Add(val1, val3))->interp() == 34);
     CHECK_THROWS_WITH((new Add(val1, var1))->interp(), "Variable(s) exist(s) in this expression");
     CHECK_THROWS_WITH((new Add(var2, val2))->interp(), "Variable(s) exist(s) in this expression");
+    
+    CHECK((new Mult(val1, val2))->interp() == 408);
+    CHECK((new Mult(val1, val3))->interp() == 289);
+    CHECK_THROWS_WITH((new Mult(val1, var1))->interp(), "Variable(s) exist(s) in this expression");
+    CHECK_THROWS_WITH((new Mult(var2, val2))->interp(), "Variable(s) exist(s) in this expression");
+}
+
+TEST_CASE("has_variables") {
+    Num* val1 = new Num(17);
+    Num* val2 = new Num(24);
+    Num* val3 = new Num(17);
+    Num* val4 = new Num(24);
+    Variables* var1 = new Variables("x");
+    Variables* var2 = new Variables("y");
+    Variables* var3 = new Variables("X");
+    
+    CHECK(val3->has_variable() == false);
+    CHECK(val4->has_variable() == false);
+    
+    CHECK(var1->has_variable() == true);
+    CHECK(var3->has_variable() == true);
+    
+    CHECK((new Add(var1, val1))->has_variable() == true);
+    CHECK((new Add(val2, var2))->has_variable() == true);
+    CHECK((new Add(var1, var2))->has_variable() == true);
+    CHECK((new Add(val1, val2))->has_variable() == false);
+    
+    CHECK((new Mult(var1, val1))->has_variable() == true);
+    CHECK((new Mult(val2, var2))->has_variable() == true);
+    CHECK((new Mult(var1, var2))->has_variable() == true);
+    CHECK((new Mult(val1, val2))->has_variable() == false);
+}
+
+TEST_CASE("subst") {
+    Num* val1 = new Num(17);
+    Num* val2 = new Num(24);
+    Variables* var1 = new Variables("x");
+    Variables* var2 = new Variables("y");
+    
+    CHECK(val1->subst("x", new Num(24))->equals(val1));
+    CHECK(val2->subst("y", new Num(17))->equals(val2));
+    
+    CHECK(var1->subst("x", new Variables("y"))->equals(var2));
+    CHECK(var2->subst("x", new Variables("X"))->equals(var2));
+    CHECK(var1->subst("x", new Num(17))->equals(val1));
+    CHECK(var2->subst("y", new Add(new Num(17), new Num(24)))->equals(new Add(val1, val2)));
+    
     CHECK((new Add(val1, val2))->subst("x", new Variables("x"))->equals(new Add(val1, val2)));
     CHECK((new Add(new Variables("x"), val1))->subst("x", new Variables("y"))
           ->equals(new Add(new Variables("y"), val1)));
@@ -214,13 +267,6 @@ TEST_CASE("equals") {
     CHECK((new Add(new Variables("y"), new Variables("y")))->subst("Y", new Variables("X"))
           ->equals(new Add(new Variables("y"), new Variables("y"))));
     
-    CHECK((new Mult(val1, val2))->equals(new Mult(val3, val4)) == true);
-    CHECK((new Mult(val1, val2))->equals(new Mult(val2, val1)) == false);
-    CHECK((new Mult(val3, val4))->equals(new Mult(val4, val3)) == false);
-    CHECK((new Mult(val1, val2))->interp() == 408);
-    CHECK((new Mult(val1, val3))->interp() == 289);
-    CHECK_THROWS_WITH((new Mult(val1, var1))->interp(), "Variable(s) exist(s) in this expression");
-    CHECK_THROWS_WITH((new Mult(var2, val2))->interp(), "Variable(s) exist(s) in this expression");
     CHECK((new Mult(val1, val2))->subst("x", new Variables("x"))->equals(new Mult(val1, val2)));
     CHECK((new Mult(var1, val1))->subst("x", new Variables("y"))
           ->equals(new Mult(var2, val1)));
@@ -230,8 +276,5 @@ TEST_CASE("equals") {
           ->equals(new Mult(var2, var2)));
     CHECK((new Mult(var2, var2))->subst("Y", new Variables("X"))
           ->equals(new Mult(var2, var2)));
-    
-    CHECK((new Add(val1, val2))->equals(new Mult(val1, val2)) == false);
-    CHECK((new Add(val1, val2))->equals(new Mult(val3, val4)) == false);
 }
 
