@@ -218,93 +218,93 @@ TEST_CASE("print") {
 }
 
 TEST_CASE("pretty_print") {
-        Num* val1 = new Num(17);
-        Num* val2 = new Num(24);
-        Variable* var1 = new Variable("x");
-        Variable* var2 = new Variable("y");
+    Num* val1 = new Num(17);
+    Num* val2 = new Num(24);
+    Variable* var1 = new Variable("x");
+    Variable* var2 = new Variable("y");
 
-        std::string toPrettyStr;
+    std::string toPrettyStr;
+
+    //Num tests
+    toPrettyStr = "17";
+    CHECK(val1->to_pretty_str() == toPrettyStr);
     
-        //Num tests
-        toPrettyStr = "17";
-        CHECK(val1->to_pretty_str() == toPrettyStr);
-        
-        toPrettyStr = "24";
-        CHECK(val2->to_pretty_str() == toPrettyStr);
-        
-        //Variable tests
-        toPrettyStr = "x";
-        CHECK(var1->to_pretty_str() == toPrettyStr);
-        
-        toPrettyStr = "y";
-        CHECK(var2->to_pretty_str() == toPrettyStr);
+    toPrettyStr = "24";
+    CHECK(val2->to_pretty_str() == toPrettyStr);
     
-        //Add tests
-        toPrettyStr = "17 + 24";
-        CHECK((new Add(val1, val2))->to_pretty_str() == toPrettyStr);
-        
-        toPrettyStr = "x + y";
-        CHECK((new Add(var1, var2))->to_pretty_str() == toPrettyStr);
+    //Variable tests
+    toPrettyStr = "x";
+    CHECK(var1->to_pretty_str() == toPrettyStr);
     
-        toPrettyStr = "24 + y";
-        CHECK((new Add(val2, var2))->to_pretty_str() == toPrettyStr);
+    toPrettyStr = "y";
+    CHECK(var2->to_pretty_str() == toPrettyStr);
+
+    //Add tests
+    toPrettyStr = "17 + 24";
+    CHECK((new Add(val1, val2))->to_pretty_str() == toPrettyStr);
     
-        toPrettyStr = "(17 + x) + 24";
-        CHECK((new Add(new Add(val1, var1), val2))->to_pretty_str() == toPrettyStr);
+    toPrettyStr = "x + y";
+    CHECK((new Add(var1, var2))->to_pretty_str() == toPrettyStr);
 
-        toPrettyStr = "x + y + 24";
-        CHECK((new Add(var1, new Add(var2, val2)))->to_pretty_str() == toPrettyStr);
+    toPrettyStr = "24 + y";
+    CHECK((new Add(val2, var2))->to_pretty_str() == toPrettyStr);
+
+    toPrettyStr = "(17 + x) + 24";
+    CHECK((new Add(new Add(val1, var1), val2))->to_pretty_str() == toPrettyStr);
+
+    toPrettyStr = "x + y + 24";
+    CHECK((new Add(var1, new Add(var2, val2)))->to_pretty_str() == toPrettyStr);
+
+    toPrettyStr = "17 * x + 24";
+    CHECK((new Add(new Mult(val1, var1), val2))->to_pretty_str() == toPrettyStr);
+
+    toPrettyStr = "x + y * 24";
+    CHECK((new Add(var1, new Mult(var2, val2)))->to_pretty_str() == toPrettyStr);
+
+    toPrettyStr = "(17 + x) + 24 + y";
+    CHECK((new Add(new Add(val1, var1), new Add(val2, var2)))->to_pretty_str() == toPrettyStr);
+
+    toPrettyStr = "17 * x + 24 * y";
+    CHECK((new Add(new Mult(val1, var1), new Mult(val2, var2)))->to_pretty_str() == toPrettyStr);
+
+    toPrettyStr = "(17 + x) + 24 * y";
+    CHECK((new Add(new Add(val1, var1), new Mult(val2, var2)))->to_pretty_str() == toPrettyStr);
+
+    toPrettyStr = "17 * x + 24 + y";
+    CHECK((new Add(new Mult(val1, var1), new Add(val2, var2)))->to_pretty_str() == toPrettyStr);
+
+    //Mult tests
+    toPrettyStr = "17 * 24";
+    CHECK((new Mult(val1, val2))->to_pretty_str() == toPrettyStr);
     
-        toPrettyStr = "17 * x + 24";
-        CHECK((new Add(new Mult(val1, var1), val2))->to_pretty_str() == toPrettyStr);
-    
-        toPrettyStr = "x + y * 24";
-        CHECK((new Add(var1, new Mult(var2, val2)))->to_pretty_str() == toPrettyStr);
-    
-        toPrettyStr = "(17 + x) + 24 + y";
-        CHECK((new Add(new Add(val1, var1), new Add(val2, var2)))->to_pretty_str() == toPrettyStr);
+    toPrettyStr = "x * y";
+    CHECK((new Mult(var1, var2))->to_pretty_str() == toPrettyStr);
 
-        toPrettyStr = "17 * x + 24 * y";
-        CHECK((new Add(new Mult(val1, var1), new Mult(val2, var2)))->to_pretty_str() == toPrettyStr);
-    
-        toPrettyStr = "(17 + x) + 24 * y";
-        CHECK((new Add(new Add(val1, var1), new Mult(val2, var2)))->to_pretty_str() == toPrettyStr);
+    toPrettyStr = "24 * y";
+    CHECK((new Mult(val2, var2))->to_pretty_str() == toPrettyStr);
 
-        toPrettyStr = "17 * x + 24 + y";
-        CHECK((new Add(new Mult(val1, var1), new Add(val2, var2)))->to_pretty_str() == toPrettyStr);
-    
-        //Mult tests
-        toPrettyStr = "17 * 24";
-        CHECK((new Mult(val1, val2))->to_pretty_str() == toPrettyStr);
-        
-        toPrettyStr = "x * y";
-        CHECK((new Mult(var1, var2))->to_pretty_str() == toPrettyStr);
+    toPrettyStr = "(17 + x) * 24";
+    CHECK((new Mult(new Add(val1, var1), val2))->to_pretty_str() == toPrettyStr);
 
-        toPrettyStr = "24 * y";
-        CHECK((new Mult(val2, var2))->to_pretty_str() == toPrettyStr);
+    toPrettyStr = "x * (y + 24)";
+    CHECK((new Mult(var1, new Add(var2, val2)))->to_pretty_str() == toPrettyStr);
 
-        toPrettyStr = "(17 + x) * 24";
-        CHECK((new Mult(new Add(val1, var1), val2))->to_pretty_str() == toPrettyStr);
+    toPrettyStr = "(17 * x) * 24";
+    CHECK((new Mult(new Mult(val1, var1), val2))->to_pretty_str() == toPrettyStr);
 
-        toPrettyStr = "x * (y + 24)";
-        CHECK((new Mult(var1, new Add(var2, val2)))->to_pretty_str() == toPrettyStr);
+    toPrettyStr = "x * y * 24";
+    CHECK((new Mult(var1, new Mult(var2, val2)))->to_pretty_str() == toPrettyStr);
 
-        toPrettyStr = "(17 * x) * 24";
-        CHECK((new Mult(new Mult(val1, var1), val2))->to_pretty_str() == toPrettyStr);
+    toPrettyStr = "(17 + x) * (24 + y)";
+    CHECK((new Mult(new Add(val1, var1), new Add(val2, var2)))->to_pretty_str() == toPrettyStr);
 
-        toPrettyStr = "x * y * 24";
-        CHECK((new Mult(var1, new Mult(var2, val2)))->to_pretty_str() == toPrettyStr);
+    toPrettyStr = "(17 * x) * 24 * y";
+    CHECK((new Mult(new Mult(val1, var1), new Mult(val2, var2)))->to_pretty_str() == toPrettyStr);
 
-        toPrettyStr = "(17 + x) * (24 + y)";
-        CHECK((new Mult(new Add(val1, var1), new Add(val2, var2)))->to_pretty_str() == toPrettyStr);
+    toPrettyStr = "(17 + x) * 24 * y";
+    CHECK((new Mult(new Add(val1, var1), new Mult(val2, var2)))->to_pretty_str() == toPrettyStr);
 
-        toPrettyStr = "(17 * x) * 24 * y";
-        CHECK((new Mult(new Mult(val1, var1), new Mult(val2, var2)))->to_pretty_str() == toPrettyStr);
-
-        toPrettyStr = "(17 + x) * 24 * y";
-        CHECK((new Mult(new Add(val1, var1), new Mult(val2, var2)))->to_pretty_str() == toPrettyStr);
-
-        toPrettyStr = "(17 * x) * (24 + y)";
-        CHECK((new Mult(new Mult(val1, var1), new Add(val2, var2)))->to_pretty_str() == toPrettyStr);
+    toPrettyStr = "(17 * x) * (24 + y)";
+    CHECK((new Mult(new Mult(val1, var1), new Add(val2, var2)))->to_pretty_str() == toPrettyStr);
 }
 
