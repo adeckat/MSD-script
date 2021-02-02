@@ -9,7 +9,7 @@ msdscript: $(OBJS)
 
 .PHONY: test
 test: msdscript
-	/ngahuynh/CS6015/MSDscript/MSDscript/msdscript --test
+	./msdscript --test
 	
 #Build main.o requires main.cpp and cmdline.h to exist
 main.o: main.cpp $(INCS)
