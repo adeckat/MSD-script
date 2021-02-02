@@ -6,6 +6,11 @@ CXXFLAGS = --std=c++14 -O2
 #The executable "msdscript" depends on 2 object files
 msdscript: $(OBJS)
 	$(CXX) $(CXXFLAGS) -o msdscript $(OBJS)
+
+.PHONY: test
+test: msdscript
+	./msdscript --test
+	
 #Build main.o requires main.cpp and cmdline.h to exist
 main.o: main.cpp $(INCS)
 	$(CXX) $(CXXFLAGS) -c main.cpp
