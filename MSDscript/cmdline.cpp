@@ -6,7 +6,6 @@
 //
 #define CATCH_CONFIG_RUNNER
 #include "catch.h"
-#include "expr_tests.cpp"
 #include "cmdline.h"
 
 void use_arguments(int argc, char * arg[]) {
@@ -25,7 +24,6 @@ void use_arguments(int argc, char * arg[]) {
                     if (result != 0) {
                         exit(1);
                     }
-//                    std::cout<<"Tests passed\n";
                 }
                 else {
                     std::cerr<<"Error: Test argument has been seen already\n";

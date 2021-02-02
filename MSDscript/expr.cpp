@@ -15,7 +15,7 @@ std::string Expr::to_str() {
 }
 
 std::string Expr::to_pretty_str() {
-    std::stringstream out("");
+    std::stringstream out(""); 
     this->pretty_print(out);
     return out.str();
 }

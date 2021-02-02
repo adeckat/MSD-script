@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <string>
 #include <iostream>
+#include <sstream>
 
 class Expr {
 public:

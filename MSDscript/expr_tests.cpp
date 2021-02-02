@@ -6,9 +6,7 @@
 //
 
 #include "catch.h"
-#include "expr.cpp"
-#include <stdio.h>
-#include <iostream>
+#include "expr.h"
 
 TEST_CASE("equals") {
     Num* val1 = new Num(17);
@@ -26,6 +24,7 @@ TEST_CASE("equals") {
     CHECK(var1->equals(var2) == false);
 
     CHECK(val1->equals(var1) == false);
+    CHECK(var2->equals(val2) == false);
     
     CHECK((new Add(val1, val2))->equals(new Add(val3, val4)) == true);
     CHECK((new Add(val1, val2))->equals(new Add(val2, val1)) == false);
@@ -36,7 +35,7 @@ TEST_CASE("equals") {
     CHECK((new Mult(val3, val4))->equals(new Mult(val4, val3)) == false);
     
     CHECK((new Add(val1, val2))->equals(new Mult(val1, val2)) == false);
-    CHECK((new Add(val1, val2))->equals(new Mult(val3, val4)) == false);
+    CHECK((new Mult(val1, val2))->equals(new Add(val3, val4)) == false);
 }
 
 TEST_CASE("interp") {
