@@ -12,7 +12,7 @@ main.o: main.cpp $(INCS)
 	
 .PHONY: test
 test: msdscript
-	ngahuynh/CS6015/MSDscript/MSDscript/msdscript --test
+	./msdscript --test
 	
 #Build cmdline.o requires cmdline.cpp and cmdline.h to exist
 cmdline.o: cmdline.cpp cmdline.h
