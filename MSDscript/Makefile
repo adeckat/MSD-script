@@ -14,6 +14,11 @@ test: msdscript
 #Build main.o requires main.cpp and cmdline.h to exist
 main.o: main.cpp $(INCS)
 	$(CXX) $(CXXFLAGS) -c main.cpp
+	
+.PHONY: test
+test: msdscript
+	./msdscript --test
+	
 #Build cmdline.o requires cmdline.cpp and cmdline.h to exist
 cmdline.o: cmdline.cpp cmdline.h
 	$(CXX) $(CXXFLAGS) -c cmdline.cpp
