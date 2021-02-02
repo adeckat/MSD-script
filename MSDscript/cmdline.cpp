@@ -6,7 +6,7 @@
 //
 #define CATCH_CONFIG_RUNNER
 #include "catch.h"
-#include "expr.cpp"
+#include "expr_tests.cpp"
 #include "cmdline.h"
 
 void use_arguments(int argc, char * arg[]) {
