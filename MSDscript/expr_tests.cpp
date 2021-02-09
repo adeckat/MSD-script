@@ -36,6 +36,12 @@ TEST_CASE("equals") {
     
     CHECK((new Add(val1, val2))->equals(new Mult(val1, val2)) == false);
     CHECK((new Mult(val1, val2))->equals(new Add(val3, val4)) == false);
+    
+    CHECK ((new _let("x", val1, new Add(var1, val2)))->equals(new Mult(var1, val1)) == false);
+    CHECK ((new _let("x", val1, new Add(var1, val2)))->equals(new _let("x", new Num(17), new Add(new Variable("x"), new Num(24)))) == true);
+    CHECK ((new _let("x", val1, new Add(var1, val2)))->equals(new _let("y", new Num(17), new Add(new Variable("x"), new Num(24)))) == false);
+    CHECK ((new _let("x", val1, new Add(var1, val2)))->equals(new _let("x", new Num(24), new Add(new Variable("x"), new Num(24)))) == false);
+    CHECK ((new _let("x", val1, new Add(var1, val2)))->equals(new _let("x", new Num(17), new Add(new Variable("y"), new Num(24)))) == false);
 }
 
 TEST_CASE("interp") {
@@ -53,13 +59,30 @@ TEST_CASE("interp") {
     
     CHECK((new Add(val1, val2))->interp() == 41);
     CHECK((new Add(val1, val3))->interp() == 34);
-    CHECK_THROWS_WITH((new Add(val1, var1))->interp(), "Variable(s) exist(s) in this expression");
-    CHECK_THROWS_WITH((new Add(var2, val2))->interp(), "Variable(s) exist(s) in this expression");
+    CHECK_THROWS_WITH((new Add(val1, var1))->interp(),
+                      "Variable(s) exist(s) in this expression");
+    CHECK_THROWS_WITH((new Add(var2, val2))->interp(),
+                      "Variable(s) exist(s) in this expression");
     
     CHECK((new Mult(val1, val2))->interp() == 408);
     CHECK((new Mult(val1, val3))->interp() == 289);
-    CHECK_THROWS_WITH((new Mult(val1, var1))->interp(), "Variable(s) exist(s) in this expression");
-    CHECK_THROWS_WITH((new Mult(var2, val2))->interp(), "Variable(s) exist(s) in this expression");
+    CHECK_THROWS_WITH((new Mult(val1, var1))->interp(),
+                      "Variable(s) exist(s) in this expression");
+    CHECK_THROWS_WITH((new Mult(var2, val2))->interp(),
+                      "Variable(s) exist(s) in this expression");
+    
+    CHECK((new _let("x", val1, val2))->interp() == 24);
+    CHECK((new _let("x", val1, new Add(var1, val2)))->interp() == 41);
+    CHECK((new _let("x", val1, new _let("y", val2, new Add(var1, val1))))->interp() == 34);
+    CHECK((new _let("y", new Add(val1, val2), new Add(var2, new Num(1))))->interp() == 42);
+    CHECK((new _let("x", val1, new _let("x", new Add(var1, val2), new Add(var1, new Num(2)))))->interp() == 43);
+    CHECK((new _let("x", val1, new _let("x", val2, new Add(var1, new Num(2)))))
+          ->interp() == 26);
+    CHECK((new _let("x", new Num(17), new Add(new _let("y", new Num(24), new Add(var2, new Num(2))), var1)))->interp() == 43);
+   
+    CHECK((new Add(new Mult(val1, new _let("x", new Num(1), var1)), val2))->interp() == 41);
+    CHECK_THROWS_WITH((new _let("x", new Add(var1, val1), new Add(var1, val2)))->interp(),
+                      "Variable(s) exist(s) in this expression");
 }
 
 TEST_CASE("has_variables") {
@@ -91,6 +114,10 @@ TEST_CASE("has_variables") {
     CHECK((new Mult(val1, val2))->has_variable() == false);
     CHECK((new Mult(new Mult(val2, var2), var1))->has_variable() == true);
     CHECK((new Mult(new Mult(val2, val3), val1))->has_variable() == false);
+    
+    CHECK((new _let("x", new Add(val1, val2), new Add(var1, val3)))
+          ->has_variable() == true);
+    CHECK((new _let("x", val1, new Add(val2, val3)))->has_variable() == false);
 }
 
 TEST_CASE("subst") {
@@ -135,6 +162,12 @@ TEST_CASE("subst") {
           ->equals(new Mult(new Mult(val2, var2), var3)));
     CHECK((new Mult(new Mult(val2, var1), var1))->subst("x", new Variable("X"))
           ->equals(new Mult(new Mult(val2, var3), var3)));
+    
+    CHECK((new _let("x", val1, var1))->subst("x", new Variable("y"))
+          ->equals(new _let("x", val1, var1)));
+    CHECK((new _let("x", val1, var1))->subst("y", new Variable("X"))
+          ->equals(new _let("x", val1, var1)));
+    CHECK((new _let("x", new Add(var1, val1), new Add(var1, val2)))->subst("x", new Variable("y"))->equals(new _let("x", new Add(var2, val1), new Add(var1, val2))));
 }
 
 TEST_CASE("print") {
@@ -187,7 +220,7 @@ TEST_CASE("print") {
     toString = "((17*x)+(24*y))";
     CHECK((new Add(new Mult(val1, var1), new Mult(val2, var2)))->to_str() == toString);
     
-    //Mult test
+    //Mult tests
     toString = "(17*24)";
     CHECK((new Mult(val1, val2))->to_str() == toString);
     
@@ -214,6 +247,13 @@ TEST_CASE("print") {
     
     toString = "((17*x)*(24*y))";
     CHECK((new Mult(new Mult(val1, var1), new Mult(val2, var2)))->to_str() == toString);
+    
+    //_let tests
+    toString = "(_let x=17 _in (x+24))";
+    CHECK((new _let("x", val1, new Add(var1, val2)))->to_str() == toString);
+    
+    toString = "(_let x=5 _in ((_let y=3 _in (y+2))+x))";
+    CHECK((new _let("x", new Num(5), new Add((new _let("y", new Num (3), new Add(var2, new Num(2)))), var1)))->to_str() == toString);
 }
 
 TEST_CASE("pretty_print") {
@@ -305,5 +345,22 @@ TEST_CASE("pretty_print") {
 
     toPrettyStr = "(17 * x) * (24 + y)";
     CHECK((new Mult(new Mult(val1, var1), new Add(val2, var2)))->to_pretty_str() == toPrettyStr);
+    
+    //_let tests
+    toPrettyStr = "_let x = 5\n_in  (_let y = 3\n      _in  y + 2) + x";
+    CHECK((new _let("x", new Num(5), new Add(new _let("y", new Num(3), new Add(var2, new Num(2))), var1)))->to_pretty_str() == toPrettyStr);
+
+    toPrettyStr = "_let x = 1\n_in  _let x = 2\n     _in  _let x = 3\n          _in  x + 4";
+    CHECK((new _let("x", new Num(1), new _let("x", new Num(2), new _let("x", new Num(3), new Add(var1, new Num(4))))))->to_pretty_str() == toPrettyStr);
+
+    toPrettyStr = "_let x = 17\n_in  x + 24";
+    CHECK((new _let("x", val1, new Add(var1, val2)))->to_pretty_str()== toPrettyStr);
+
+    toPrettyStr = "5 * (_let x = 5\n     _in  x) + 1";
+    CHECK((new Add(new Mult(new Num(5), new _let("x", new Num(5), new Variable("x"))), new Num(1)))->to_pretty_str() == toPrettyStr);
+
+    toPrettyStr = "5 * (_let x = 5\n     _in  x + 1)";
+    CHECK((new Mult(new Num(5), new _let("x", new Num(5), new Add(var1, new Num(1)))))->to_pretty_str() == toPrettyStr);
 }
+ 
 
