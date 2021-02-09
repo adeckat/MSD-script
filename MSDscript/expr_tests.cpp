@@ -361,6 +361,12 @@ TEST_CASE("pretty_print") {
 
     toPrettyStr = "5 * (_let x = 5\n     _in  x + 1)";
     CHECK((new Mult(new Num(5), new _let("x", new Num(5), new Add(var1, new Num(1)))))->to_pretty_str() == toPrettyStr);
+    
+    toPrettyStr = "3 + 7 * (_let x = 3\n         _in  _let x = 5\n              _in  x + _let x = 5\n                       _in  x * 1)";
+    CHECK((new Add(new Num(3),(new Mult(new Num(7),(new _let("x", new Num(3), (new _let("x", new Num(5), new Add(new Variable("x"), new _let("x", new Num(5), new Mult(new Variable("x"), new Num(1))))))))))))->to_pretty_str() == toPrettyStr);
+    
+    toPrettyStr = "3 + 7 + _let x = 3\n        _in  _let x = 5\n             _in  x + _let x = 5\n                      _in  x * 1";
+    CHECK((new Add(new Num(3),(new Add(new Num(7),(new _let("x", new Num(3), (new _let("x", new Num(5), new Add(new Variable("x"), new _let("x", new Num(5), new Mult(new Variable("x"), new Num(1))))))))))))->to_pretty_str() == toPrettyStr);
 }
  
 
