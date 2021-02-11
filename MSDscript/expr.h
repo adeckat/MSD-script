@@ -42,7 +42,7 @@ public:
         print_group_add_or_mult,
     } print_mode_t;
     //Pretty print helper funcion
-    virtual void pretty_print_at(print_mode_t mode, std::ostream& out, int indentation) = 0;
+    virtual void pretty_print_at(print_mode_t mode, std::ostream& out, int indentation, int inside) = 0;
     //Print method to print the pretty expression
     void pretty_print(std::ostream& out);
 };
@@ -56,7 +56,7 @@ public:
     virtual bool has_variable();
     virtual Expr *subst(std::string s, Expr *other);
     virtual void print(std::ostream& out);
-    virtual void pretty_print_at(print_mode_t mode, std::ostream& out, int indentation);
+    virtual void pretty_print_at(print_mode_t mode, std::ostream& out, int indentation, int inside);
 };
 
 class Variable : public Expr {
@@ -68,7 +68,7 @@ public:
     virtual bool has_variable();
     virtual Expr *subst(std::string s, Expr *other);
     virtual void print(std::ostream& out);
-    virtual void pretty_print_at(print_mode_t mode, std::ostream& out, int indentation);
+    virtual void pretty_print_at(print_mode_t mode, std::ostream& out, int indentation, int inside);
 };
 
 class Add : public Expr {
@@ -81,7 +81,7 @@ public:
     virtual bool has_variable();
     virtual Expr *subst(std::string s, Expr *other);
     virtual void print(std::ostream& out);
-    virtual void pretty_print_at(print_mode_t mode, std::ostream& out, int indentation);
+    virtual void pretty_print_at(print_mode_t mode, std::ostream& out, int indentation, int inside);
 };
 
 class Mult : public Expr {
@@ -94,7 +94,7 @@ public:
     virtual bool has_variable();
     virtual Expr *subst(std::string s, Expr *other);
     virtual void print(std::ostream& out);
-    virtual void pretty_print_at(print_mode_t mode, std::ostream& out, int indentation);
+    virtual void pretty_print_at(print_mode_t mode, std::ostream& out, int indentation, int inside);
 };
 
 class _let : public Expr {
@@ -108,7 +108,7 @@ public:
     virtual bool has_variable();
     virtual Expr *subst(std::string s, Expr *other);
     virtual void print(std::ostream& out);
-    virtual void pretty_print_at(print_mode_t mode, std::ostream& out, int indentation);
+    virtual void pretty_print_at(print_mode_t mode, std::ostream& out, int indentation, int inside);
 };
 
 #endif /* expr_h */

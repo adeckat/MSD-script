@@ -22,7 +22,7 @@ std::string Expr::to_pretty_str() {
 }
 
 void Expr::pretty_print(std::ostream& out) {
-    pretty_print_at(print_group_none, out, 0);
+    pretty_print_at(print_group_none, out, 0, 0);
 }
 
 //Num and its implementations
@@ -50,8 +50,9 @@ Expr *Num::subst(std::string s, Expr *other) {
 void Num::print(std::ostream& out) {
     out << this->val;
 }
-void Num::pretty_print_at(print_mode_t mode, std::ostream& out, int indentation) {
+void Num::pretty_print_at(print_mode_t mode, std::ostream& out, int indentation, int inside) {
     mode = print_group_none;
+    inside = 0;
     out << this->val;
 }
 
@@ -85,8 +86,9 @@ Expr *Variable::subst(std::string s, Expr *other) {
 void Variable::print(std::ostream& out) {
     out << this->var;
 }
-void Variable::pretty_print_at(print_mode_t mode, std::ostream& out, int indentation) {
+void Variable::pretty_print_at(print_mode_t mode, std::ostream& out, int indentation, int inside) {
     mode = print_group_none;
+    inside = 0;
     out << this->var;
 }
 
@@ -122,13 +124,14 @@ void Add::print(std::ostream& out) {
     this->rhs->print(out);
     out << ")";
 }
-void Add::pretty_print_at(print_mode_t mode, std::ostream& out, int indentation) {
+void Add::pretty_print_at(print_mode_t mode, std::ostream& out, int indentation, int inside) {
+    inside += 2;
     if (mode >= print_group_add) {
         out << "(";
     }
-    this->lhs->pretty_print_at(print_group_add, out, indentation);
+    this->lhs->pretty_print_at(print_group_add, out, indentation, inside);
     out << " + ";
-    this->rhs->pretty_print_at(print_group_none, out, indentation);
+    this->rhs->pretty_print_at(print_group_none, out, indentation, 0);
     if (mode >= print_group_add) {
         out << ")";
     }
@@ -166,13 +169,14 @@ void Mult::print(std::ostream& out) {
     this->rhs->print(out);
     out << ")";
 }
-void Mult::pretty_print_at(print_mode_t mode, std::ostream& out, int indentation) {
+void Mult::pretty_print_at(print_mode_t mode, std::ostream& out, int indentation, int inside) {
+    inside += 1;
     if (mode >= print_group_add_or_mult) {
         out << "(";
     }
-    this->lhs->pretty_print_at(print_group_add_or_mult, out, indentation);
+    this->lhs->pretty_print_at(print_group_add_or_mult, out, indentation, 2);
     out << " * ";
-    this->rhs->pretty_print_at(print_group_add, out, indentation);
+    this->rhs->pretty_print_at(print_group_add, out, indentation, inside);
     if (mode >= print_group_add_or_mult) {
         out << ")";
     }
@@ -208,29 +212,24 @@ Expr *_let::subst(std::string s, Expr *other) {
     return new _let(this->var, this->rhs, this->body->subst(s, other));
 } 
 void _let::print(std::ostream& out) {
-    out << "(_let ";
-    out << this->var;
-    out << "=";
+    out << "(_let " << this->var << "=";
     this->rhs->print(out);
     out << " _in ";
     this->body->print(out);
     out << ")";
 }
-void _let::pretty_print_at(print_mode_t mode, std::ostream& out, int indentation) {
-    if (mode >= print_group_add) {
+void _let::pretty_print_at(print_mode_t mode, std::ostream& out, int indentation, int inside) {
+    if (mode >= print_group_none && inside > 1) {
         out << "(";
     }
     int pos1 = (int) out.tellp();
-    out << "_let ";
-    out << this->var;
-    out << " = ";
+    out << "_let " << this->var << " = ";
     this->rhs->print(out);
     out << "\n";
     int pos2 = (int) out.tellp();
-    out << std::string(pos1 - indentation, ' ');
-    out << "_in  ";
-    this->body->pretty_print_at(print_group_none, out, pos2);
-    if (mode >= print_group_add) {
+    out << std::string(pos1 - indentation, ' ') << "_in  ";
+    this->body->pretty_print_at(print_group_none, out, pos2, inside);
+    if (mode >= print_group_none && inside > 1) {
         out << ")";
     }
 }

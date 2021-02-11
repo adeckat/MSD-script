@@ -83,6 +83,20 @@ TEST_CASE("interp") {
     CHECK((new Add(new Mult(val1, new _let("x", new Num(1), var1)), val2))->interp() == 41);
     CHECK_THROWS_WITH((new _let("x", new Add(var1, val1), new Add(var1, val2)))->interp(),
                       "Variable(s) exist(s) in this expression");
+    
+    Expr *let1 = (new _let("x",
+                          new Num(1),
+                          new Add(new Variable("x"), new Num(2))));
+    CHECK( let1->subst("x", new Add(new Variable("y"), new Num(3)))
+          ->equals(let1) );
+    
+    Expr *let2 = (new _let("x",
+                          new Variable("x"),
+                          new Add(new Variable("x"), new Num(2))));
+    CHECK( let2->subst("x", new Add(new Variable("y"), new Num(3)))
+          ->equals(new _let("x",
+                           new Add(new Variable("y"), new Num(3)),
+                           new Add(new Variable("x"), new Num(2)))) );
 }
 
 TEST_CASE("has_variables") {
@@ -359,10 +373,10 @@ TEST_CASE("pretty_print") {
     toPrettyStr = "5 * (_let x = 5\n     _in  x) + 1";
     CHECK((new Add(new Mult(new Num(5), new _let("x", new Num(5), new Variable("x"))), new Num(1)))->to_pretty_str() == toPrettyStr);
 
-    toPrettyStr = "5 * (_let x = 5\n     _in  x + 1)";
+    toPrettyStr = "5 * _let x = 5\n    _in  x + 1";
     CHECK((new Mult(new Num(5), new _let("x", new Num(5), new Add(var1, new Num(1)))))->to_pretty_str() == toPrettyStr);
     
-    toPrettyStr = "3 + 7 * (_let x = 3\n         _in  _let x = 5\n              _in  x + _let x = 5\n                       _in  x * 1)";
+    toPrettyStr = "3 + 7 * _let x = 3\n        _in  _let x = 5\n             _in  x + _let x = 5\n                      _in  x * 1";
     CHECK((new Add(new Num(3),(new Mult(new Num(7),(new _let("x", new Num(3), (new _let("x", new Num(5), new Add(new Variable("x"), new _let("x", new Num(5), new Mult(new Variable("x"), new Num(1))))))))))))->to_pretty_str() == toPrettyStr);
     
     toPrettyStr = "3 + 7 + _let x = 3\n        _in  _let x = 5\n             _in  x + _let x = 5\n                      _in  x * 1";
