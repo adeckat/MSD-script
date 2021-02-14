@@ -182,6 +182,26 @@ TEST_CASE("subst") {
     CHECK((new _let("x", val1, var1))->subst("y", new Variable("X"))
           ->equals(new _let("x", val1, var1)));
     CHECK((new _let("x", new Add(var1, val1), new Add(var1, val2)))->subst("x", new Variable("y"))->equals(new _let("x", new Add(var2, val1), new Add(var1, val2))));
+    CHECK((new _let("y", new Variable("x"), new Variable("x")))->subst("x", new Num(3))->equals(new _let("y", new Num(3), new Num(3))));
+    CHECK((new _let("x", new Num(1), new Add(new Variable("x"), new Num(2))))
+        ->subst("x", new Add(new Variable("y"), new Num(3)))
+        ->equals(new _let("x", new Num(1), new Add(new Variable("x"), new Num(2)))));
+    CHECK((new _let("x", new Variable("x"), new Add(new Variable("x"), new Num(2))))
+          ->subst("x", new Add(new Variable("y"), new Num(3)))
+          ->equals(new _let("x", new Add(new Variable("y"), new Num(3)), new Add(new Variable("x"), new Num(2)))));
+    CHECK((new _let("x", new Variable("y"), new Add(new Variable("x"), new Num(2))))
+          ->subst("y", new Num(8))
+          ->equals(new _let("x", new Num(8), new Add(new Variable("x"), new Num(2)))));
+    CHECK((new _let("x", new Num(8), new Add(new Variable("x"), new Add(new Num(2), new Variable("y")))))->subst("y", new Num(9))
+        ->equals(new _let("x", new Num(8), new Add(new Variable("x"), new Add(new Num(2), new Num(9))))));
+    CHECK((new _let("x", new Variable("y"), new Add(new Variable("x"), new Variable("y"))))->subst("y", new Num(8))
+        ->equals(new _let("x", new Num(8), new Add(new Variable("x"), new Num(8)))));
+    CHECK((new _let("z", new Variable("x"), new Add(new Variable("z"), new Num(32))))->subst("z", new Num(0))
+        ->equals(new _let("z", new Variable("x"), new Add(new Variable("z"), new Num(32)))));
+    CHECK((new _let("z", new Variable("z"), new Add(new Variable("z"), new Num(32))))->subst("z", new Num(0))
+        ->equals(new _let("z", new Num(0), new Add(new Variable("z"), new Num(32)))));
+    CHECK((new _let("z", new Add(new Variable("z"), new Num(2)), new Add(new Variable("z"), new Num(32))))->subst("z", new Num(0))
+        ->equals(new _let("z", new Add(new Num(0), new Num(2)), new Add(new Variable("z"), new Num(32)))));
 }
 
 TEST_CASE("print") {

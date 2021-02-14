@@ -209,7 +209,7 @@ Expr *_let::subst(std::string s, Expr *other) {
     if (this->var == s) {
         return new _let(s, this->rhs->subst(s, other), this->body);
     }
-    return new _let(this->var, this->rhs, this->body->subst(s, other));
+    return new _let(this->var, this->rhs->subst(s, other), this->body->subst(s, other));
 } 
 void _let::print(std::ostream& out) {
     out << "(_let " << this->var << "=";
