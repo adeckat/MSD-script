@@ -64,6 +64,7 @@ public:
     std::string var;
     Variable(std::string var);
     virtual bool equals(Expr *other);
+    std::string getStr();
     virtual int interp();
     virtual bool has_variable();
     virtual Expr *subst(std::string s, Expr *other);

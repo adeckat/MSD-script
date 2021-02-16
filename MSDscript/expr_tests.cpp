@@ -7,6 +7,7 @@
 
 #include "catch.h"
 #include "expr.h"
+#include "parse.h"
 
 TEST_CASE("equals") {
     Num* val1 = new Num(17);
@@ -42,6 +43,9 @@ TEST_CASE("equals") {
     CHECK ((new _let("x", val1, new Add(var1, val2)))->equals(new _let("y", new Num(17), new Add(new Variable("x"), new Num(24)))) == false);
     CHECK ((new _let("x", val1, new Add(var1, val2)))->equals(new _let("x", new Num(24), new Add(new Variable("x"), new Num(24)))) == false);
     CHECK ((new _let("x", val1, new Add(var1, val2)))->equals(new _let("x", new Num(17), new Add(new Variable("y"), new Num(24)))) == false);
+    
+    CHECK(var1->getStr() == "x");
+    CHECK(var2->getStr() == "y");
 }
 
 TEST_CASE("interp") {
@@ -83,20 +87,6 @@ TEST_CASE("interp") {
     CHECK((new Add(new Mult(val1, new _let("x", new Num(1), var1)), val2))->interp() == 41);
     CHECK_THROWS_WITH((new _let("x", new Add(var1, val1), new Add(var1, val2)))->interp(),
                       "Variable(s) exist(s) in this expression");
-    
-    Expr *let1 = (new _let("x",
-                          new Num(1),
-                          new Add(new Variable("x"), new Num(2))));
-    CHECK( let1->subst("x", new Add(new Variable("y"), new Num(3)))
-          ->equals(let1) );
-    
-    Expr *let2 = (new _let("x",
-                          new Variable("x"),
-                          new Add(new Variable("x"), new Num(2))));
-    CHECK( let2->subst("x", new Add(new Variable("y"), new Num(3)))
-          ->equals(new _let("x",
-                           new Add(new Variable("y"), new Num(3)),
-                           new Add(new Variable("x"), new Num(2)))) );
 }
 
 TEST_CASE("has_variables") {
@@ -402,5 +392,133 @@ TEST_CASE("pretty_print") {
     toPrettyStr = "3 + 7 + _let x = 3\n        _in  _let x = 5\n             _in  x + _let x = 5\n                      _in  x * 1";
     CHECK((new Add(new Num(3),(new Add(new Num(7),(new _let("x", new Num(3), (new _let("x", new Num(5), new Add(new Variable("x"), new _let("x", new Num(5), new Mult(new Variable("x"), new Num(1))))))))))))->to_pretty_str() == toPrettyStr);
 }
- 
 
+TEST_CASE("parse") {
+    //interp tests
+    CHECK(parse_str("17")->interp() == 17);
+    CHECK_THROWS_WITH(parse_str("x")->interp(), "Variable(s) exist(s) in this expression");
+    CHECK_THROWS_WITH(parse_str("17 + x")->interp(), "Variable(s) exist(s) in this expression");
+    CHECK_THROWS_WITH(parse_str("24 * y")->interp(), "Variable(s) exist(s) in this expression");
+    CHECK(parse_str("17 +     -24")->interp() == -7);
+    CHECK(parse_str("24   +   17")->interp() == 41);
+    CHECK(parse_str("   17 *  24")->interp() == 408);
+    CHECK(parse_str("  -17 *  24")->interp() == -408);
+    CHECK(parse_str("17 + 17 * 24")->interp() == 425);
+    CHECK(parse_str("17 * 17 + 24")->interp() == 313);
+    CHECK(parse_str("(17 + 17) * (24 + 24)")->interp() == 1632);
+    CHECK(parse_str("17 * 17 + 24 * 24")->interp() == 865);
+    CHECK(parse_str("_let x = 17 _in x + 24")->interp() == 41);
+    CHECK_THROWS_WITH(parse_str("(17 + 17) * (24 + 24")->interp(),"Missing close parenthesis");
+    CHECK_THROWS_WITH(parse_str("_nope x = 17 _in x + 24")->interp(), "Invalid keyword");
+    CHECK_THROWS_WITH(parse_str("_lem x = 17 _in x + 24")->interp(), "Invalid keyword");
+    CHECK_THROWS_WITH(parse_str("_let x = 17 _int x + 24")->interp(), "Invalid keyword");
+    CHECK_THROWS_WITH(parse_str("_let x = 17 in x + 24")->interp(), "E2 invalid input");
+    CHECK_THROWS_WITH(parse_str("_let x + 17 _in x + 24")->interp(), "E3 invalid input");
+    CHECK_THROWS_WITH(parse_str("*let x + 17 _in x + 24")->interp(), "Invalid input");
+    
+    //print tests
+    std::string toString;
+    
+    toString = "((17+x)+24)";
+    CHECK(parse_str("(17+x)+24")->to_str() == toString);
+    
+    toString = "((17*x)+24)";
+    CHECK(parse_str("17*x+24")->to_str() == toString);
+    
+    toString = "(x+(y+24))";
+    CHECK(parse_str("x+y+24")->to_str() == toString);
+ 
+    toString = "(x+(y*24))";
+    CHECK(parse_str("x+y*24")->to_str() == toString);
+ 
+    toString = "((17+x)+(24+y))";
+    CHECK(parse_str("(17+x)+24+y")->to_str() == toString);
+
+    toString = "((17*x)+(24*y))";
+    CHECK(parse_str("17*x+24*y")->to_str() == toString);
+    
+    toString = "(24*y)";
+    CHECK(parse_str("24*y")->to_str() == toString);
+    
+    toString = "((17*x)*24)";
+    CHECK(parse_str("(17*x)*24)")->to_str() == toString);
+    
+    toString = "((17+x)*24)";
+    CHECK(parse_str("(17+x)*24")->to_str() == toString);
+ 
+    toString = "(x*(y*24))";
+    CHECK(parse_str("x*y*24")->to_str() == toString);
+    
+    toString = "(x*(y+24))";
+    CHECK(parse_str("x*(y+24)")->to_str() == toString);
+ 
+    toString = "((17+x)*(24+y))";
+    CHECK(parse_str("(17+x)*(24+y)")->to_str() == toString);
+    
+    toString = "((17*x)*(24*y))";
+    CHECK(parse_str("(17*x)*24*y")->to_str() == toString);
+    
+    toString = "(_let x=17 _in (x+24))";
+    CHECK(parse_str("_let x   = 17 _in   x+   24")->to_str() == toString);
+    
+    toString = "(_let x=5 _in ((_let y=3 _in (y+2))+x))";
+    CHECK(parse_str("_let x = 5 _in (_let y=3 _in y+2) + x")->to_str() == toString);
+    
+    //pretty_print tests
+    std::string toPrettyStr;
+    toPrettyStr = "(17 + x) + 24";
+    CHECK(parse_str("(17+x)+24")->to_pretty_str() == toPrettyStr);
+    
+    toPrettyStr = "17 * x + 24";
+    CHECK(parse_str("17*x+24")->to_pretty_str() == toPrettyStr);
+    
+    toPrettyStr = "x + y + 24";
+    CHECK(parse_str("x+y+24")->to_pretty_str() == toPrettyStr);
+ 
+    toPrettyStr = "x + y * 24";
+    CHECK(parse_str("x+y*24")->to_pretty_str() == toPrettyStr);
+ 
+    toPrettyStr = "(17 + x) + 24 + y";
+    CHECK(parse_str("(17+x)+(24+y)")->to_pretty_str() == toPrettyStr);
+
+    toPrettyStr = "17 * x + 24 * y";
+    CHECK(parse_str("(17*x)+(24*y)")->to_pretty_str() == toPrettyStr);
+        
+    toPrettyStr = "(17 * x) * 24";
+    CHECK(parse_str("(17*x)*24)")->to_pretty_str() == toPrettyStr);
+    
+    toPrettyStr = "(17 + x) * 24";
+    CHECK(parse_str("(17+x)*24")->to_pretty_str() == toPrettyStr);
+ 
+    toPrettyStr = "x * y * 24";
+    CHECK(parse_str("x*(y*24)")->to_pretty_str() == toPrettyStr);
+    
+    toPrettyStr = "x * (y + 24)";
+    CHECK(parse_str("x*(y+24)")->to_pretty_str() == toPrettyStr);
+ 
+    toPrettyStr = "(17 + x) * (24 + y)";
+    CHECK(parse_str("(17+x)*(24+y)")->to_pretty_str() == toPrettyStr);
+    
+    toPrettyStr = "(17 * x) * 24 * y";
+    CHECK(parse_str("(17*x)*(24*y)")->to_pretty_str() == toPrettyStr);
+    
+    toPrettyStr = "_let x = 5\n_in  (_let y = 3\n      _in  y + 2) + x";
+    CHECK(parse_str("_let x=5 _in (_let y=3 _in y+2) +x")->to_pretty_str() == toPrettyStr);
+
+    toPrettyStr = "_let x = 1\n_in  _let x = 2\n     _in  _let x = 3\n          _in  x + 4";
+    CHECK(parse_str("_let x=1 _in _let x=2 _in _let x=3 _in x+4")->to_pretty_str() == toPrettyStr);
+
+    toPrettyStr = "5 * (_let x = 5\n     _in  x) + 1";
+    CHECK(parse_str("(5 * _let x=5 _in x) + 1 ")->to_pretty_str() == toPrettyStr);
+
+    toPrettyStr = "5 * _let x = 5\n    _in  x + 1";
+    CHECK(parse_str("5 * _let x=5 _in x+1")->to_pretty_str() == toPrettyStr);
+
+    toPrettyStr = "3 + 7 * _let x = 3\n        _in  _let x = 5\n             _in  x + _let x = 5\n                      _in  x * 1";
+    CHECK(parse_str("3+7 * (_let x=3 _in (_let x=5 _in x+(_let x=5 _in x*1)))")
+        ->to_pretty_str() == toPrettyStr);
+
+    toPrettyStr = "3 + 7 + _let x = 3\n        _in  _let x = 5\n             _in  x + _let x = 5\n                      _in  x * 1";
+    CHECK(parse_str("3 + 7 + (_let x=3 _in (_let x=5 _in x+(_let x=5 _in x*1)))")
+        ->to_pretty_str() == toPrettyStr);
+}

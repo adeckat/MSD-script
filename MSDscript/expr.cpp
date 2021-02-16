@@ -69,6 +69,9 @@ bool Variable::equals(Expr *other) {
         return (this->var == other_var->var);
     }
 }
+std::string Variable::getStr() {
+    return this->var;
+}
 int Variable::interp() {
     throw std::runtime_error("Variable(s) exist(s) in this expression");
 }
