@@ -1,28 +1,24 @@
 #Definitions
 INCS = cmdline.h expr.h parse.h
-OBJS = main.o cmdline.o expr.o expr_tests.o parse.o
+SRCS = main.cpp cmdline.cpp expr.cpp parse.cpp tests.cpp
+
+#Path to the sub directory
+TESTPATH = ../test_msdscript/
+TESTINCS = cmdline.h exec.h test_generator.h
+TESTSRCS = main.cpp cmdline.cpp exec.cpp test_generator.cpp
+
+#OBJS = main.o cmdline.o expr.o tests.o parse.o
 CXX = c++
 CXXFLAGS = --std=c++14 -O2
+
 #The executable "msdscript" depends on 2 object files
-msdscript: $(OBJS)
-	$(CXX) $(CXXFLAGS) -o msdscript $(OBJS)
+msdscript: $(INCS) $(SRCS)
+	$(CXX) $(CXXFLAGS) -o msdscript $(SRCS)
+
+#The executable "test_msdscript" depends on 2 object files
+test_msdscript: $(TESTPATH/$(TESTINCS)) $(TESTPATH)main.cpp $(TESTPATH)cmdline.cpp $(TESTPATH)exec.cpp $(TESTPATH)test_generator.cpp
+	$(CXX) $(CXXFLAGS) -o ../MSDscript/test_msdscript $(TESTPATH)main.cpp $(TESTPATH)cmdline.cpp $(TESTPATH)exec.cpp $(TESTPATH)test_generator.cpp
 
 .PHONY: test
 test: msdscript
 	./msdscript --test
-	
-#Build main.o requires main.cpp and cmdline.h to exist
-main.o: main.cpp $(INCS)
-	$(CXX) $(CXXFLAGS) -c main.cpp
-#Build cmdline.o requires cmdline.cpp and cmdline.h to exist
-cmdline.o: cmdline.cpp cmdline.h
-	$(CXX) $(CXXFLAGS) -c cmdline.cpp
-#Build expr.o requires expr.cpp and expr.h to exist
-expr.o: expr.cpp expr.h
-	$(CXX) $(CXXFLAGS) -c expr.cpp
-#Build expr_tests.o requires expr_tests.cpp and expr.h to exist
-expr_tests.o: expr_tests.cpp expr.h
-	$(CXX) $(CXXFLAGS) -c expr_tests.cpp
-#Build parse.o requires parse.cpp and parse.h to exist
-parse.o: parse.cpp parse.h
-	$(CXX) $(CXXFLAGS) -c parse.cpp

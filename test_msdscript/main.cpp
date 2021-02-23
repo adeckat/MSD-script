@@ -1,12 +1,14 @@
 //
 //  main.cpp
-//  MSDscript
+//  test_msdscript
 //
-//  Created by Nga Huynh on 1/19/21.
+//  Created by Nga Huynh on 2/20/21.
 //
 
+#include <iostream>
+#include <time.h>
+#include <stdlib.h>
 #include "cmdline.h"
-
 
 int main(int argc, char * argv[]) {
     try {
@@ -17,4 +19,3 @@ int main(int argc, char * argv[]) {
         return 1;
     }
 }
-

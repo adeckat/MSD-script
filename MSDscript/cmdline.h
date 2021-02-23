@@ -11,5 +11,9 @@
 #include <stdio.h>
 #include <string>
 #include <iostream>
-void use_arguments(int argc, char * arg[]);
+
+void use_arguments(int argc, char * argv[]);
+
 #endif /* cmdline_h */
+
+

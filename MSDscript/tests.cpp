@@ -415,6 +415,7 @@ TEST_CASE("parse") {
     CHECK_THROWS_WITH(parse_str("_let x = 17 in x + 24")->interp(), "E2 invalid input");
     CHECK_THROWS_WITH(parse_str("_let x + 17 _in x + 24")->interp(), "E3 invalid input");
     CHECK_THROWS_WITH(parse_str("*let x + 17 _in x + 24")->interp(), "Invalid input");
+    CHECK_THROWS_WITH(parse_str("-x")->interp(), "Invalid input");
     
     //print tests
     std::string toString;

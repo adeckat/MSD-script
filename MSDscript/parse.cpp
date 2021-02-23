@@ -6,7 +6,8 @@
 //
 
 #include "parse.h"
-
+#include <cassert>
+ 
 Expr *parse_str(std::string s){
     std::istringstream str(s);
     return parse(str);
@@ -37,6 +38,9 @@ Expr *parse_num(std::istream &in) {
         if (isdigit(c)) {
             consume(in, c);
             n = n * 10 + (c - '0');
+        }
+        else if (c == '-' || isalpha(c)) {
+            throw std::runtime_error("Invalid input");
         }
         else {
             break;
@@ -159,8 +163,7 @@ Expr *parse_addend(std::istream &in) {
 
 static void consume(std::istream &in, int expect) {
     int c = in.get();
-    if (c != expect)
-        throw std::runtime_error("Consume mismatch");
+    assert(c == expect);
 }
 
 static void skip_whitespace(std::istream &in) {

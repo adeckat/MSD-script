@@ -9,17 +9,22 @@
 #include "cmdline.h"
 #include "parse.h"
 
-void use_arguments(int argc, char * arg[]) {
+void use_arguments(int argc, char * argv[]) {
     if (argc == 1) {
         return;
     }
     else if (argc >= 2) {
         for (int i = 1; i < argc; i++) {
-            if (arg[i] == (std::string)"--help") {
-                std::cout << "These arguments are allowed to use: --help, --test, --interp, --print, and --pretty_print\n";
+            if (argv[i] == (std::string)"--help") {
+                std::cout << "These arguments are allowed to use:\n";
+                std::cout << "\t--help: list of available argument\n";
+                std::cout << "\t--test: run tests\n";
+                std::cout << "\t--interp: run interp function to profuce a result of the standard input expression\n";
+                std::cout << "\t--print: print the standard input expression in a regular way\n";
+                std::cout << "\t--pretty-print: print the standard input expression in a pretty way\n";
                 exit(0);
             }
-            if (arg[i] == (std::string)"--test") {
+            if (argv[i] == (std::string)"--test") {
                 if (i == 1) {
                     int result = Catch::Session().run();
                     if (result == 0) {
@@ -34,26 +39,26 @@ void use_arguments(int argc, char * arg[]) {
                     exit(1);
                 }
             }
-            if (arg[i] == (std::string)"--interp") {
+            if (argv[i] == (std::string)"--interp") {
                 Expr* n = parse(std::cin);
-                std::cout << n->interp() << " ";
+                std::cout << n->interp();
                 std::cout << "\n";
                 exit(0);
             }
-            if (arg[i] == (std::string)"--print") {
+            if (argv[i] == (std::string)"--print") {
                 Expr* n = parse(std::cin);
                 n->print(std::cout);
                 std::cout << "\n";
                 exit(0);
             }
-            if (arg[i] == (std::string)"--pretty_print") {
+            if (argv[i] == (std::string)"--pretty-print") {
                 Expr* n = parse(std::cin);
                 std::cout << n->to_pretty_str();
                 std::cout << "\n";
                 exit(0);
             }
             else {
-                std::cerr<<"Error: The argument '" << arg[i] << "' is not allowed\n";
+                std::cerr<<"Error: The argument '" << argv[i] << "' is not allowed\n";
                 exit(1);
             }
         }

@@ -227,7 +227,7 @@ void _let::pretty_print_at(print_mode_t mode, std::ostream& out, int indentation
     }
     int pos1 = (int) out.tellp();
     out << "_let " << this->var << " = ";
-    this->rhs->print(out);
+    this->rhs->pretty_print(out);
     out << "\n";
     int pos2 = (int) out.tellp();
     out << std::string(pos1 - indentation, ' ') << "_in  ";
