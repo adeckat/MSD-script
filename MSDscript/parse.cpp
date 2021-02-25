@@ -21,7 +21,7 @@ Expr *parse(std::istream &in) {
     if (c == '+') {
         consume(in, '+');
         Expr *rhs = parse(in);
-        return new Add(e, rhs);
+        return new AddExpr(e, rhs);
     } else
         return e;
 }
@@ -49,7 +49,7 @@ Expr *parse_num(std::istream &in) {
     if (negative) {
         n = -n;
     }
-    return new Num(n);
+    return new NumExpr(n);
 }
 
 Expr *parse_var(std::istream &in) {
@@ -65,7 +65,7 @@ Expr *parse_var(std::istream &in) {
             break;
         }
     }
-    return new Variable(str);
+    return new VarExpr(str);
 }
 
 Expr *parse_let(std::istream &in) {
@@ -76,7 +76,7 @@ Expr *parse_let(std::istream &in) {
     if (kw == "let") {
         skip_whitespace(in);
         Expr *e = parse_var(in);
-        Variable *other_e = dynamic_cast<Variable*>(e);
+        VarExpr *other_e = dynamic_cast<VarExpr*>(e);
         var = other_e->getStr();
         skip_whitespace(in);
         if (in.peek() == '=') {
@@ -99,7 +99,7 @@ Expr *parse_let(std::istream &in) {
         } else {
             throw std::runtime_error("E3 invalid input");
         }
-        return new _let(var, rhs, body);
+        return new LetExpr(var, rhs, body);
     }
     else {
         throw std::runtime_error("E4 invalid input");
@@ -110,7 +110,7 @@ std::string parse_keyword(std::istream &in) {
     int c = in.peek();
     if (c == 'l' || c == 'i') {
         Expr *kw = parse_var(in);
-        Variable *other_e = dynamic_cast<Variable*>(kw);
+        VarExpr *other_e = dynamic_cast<VarExpr*>(kw);
         std::string var = other_e->getStr();
         if (var == "let" || var == "in") {
             return var;
@@ -159,7 +159,7 @@ Expr *parse_addend(std::istream &in) {
     if (c == '*') {
         consume(in, '*');
         Expr *rhs = parse_addend(in);
-        return new Mult(e, rhs);
+        return new MultExpr(e, rhs);
     } else
         return e;
 }

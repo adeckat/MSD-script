@@ -8,6 +8,8 @@
 #include "catch.h"
 #include "cmdline.h"
 #include "parse.h"
+#include "val.h"
+
 
 void use_arguments(int argc, char * argv[]) {
     if (argc == 1) {
@@ -41,7 +43,7 @@ void use_arguments(int argc, char * argv[]) {
             }
             if (argv[i] == (std::string)"--interp") {
                 Expr* n = parse(std::cin);
-                std::cout << n->interp();
+                std::cout << n->interp()->to_expr()->to_str();
                 std::cout << "\n";
                 exit(0);
             }

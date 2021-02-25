@@ -13,20 +13,21 @@
 #include <iostream>
 #include <sstream>
 
+class Val;
 class Expr {
 public:
     //Return true if two expressions are the same, and false otherwise
     virtual bool equals(Expr *e) = 0;
     
     //Return an int for the value of an expression
-    virtual int interp() = 0;
+    virtual Val* interp() = 0;
     
     //Return true if the expression is a variable or contains a variable, and false otherwise
     virtual bool has_variable() = 0;
     
     //Return a new expression with the new replaced variable when the original expression contains
     //a variable matching the string of subst method
-    virtual Expr *subst(std::string s, Expr *e) = 0;
+    virtual Expr* subst(std::string s, Expr *e) = 0;
     
     //Helper function returns a regular string
     std::string to_str();
@@ -47,67 +48,67 @@ public:
     void pretty_print(std::ostream& out);
 };
 
-class Num : public Expr {
+class NumExpr : public Expr {
 public:
-    int val;
-    Num(int val);
+    int numExpr;
+    NumExpr(int numExpr);
     virtual bool equals(Expr *other);
-    virtual int interp();
+    virtual Val* interp();
     virtual bool has_variable();
-    virtual Expr *subst(std::string s, Expr *other);
+    virtual Expr* subst(std::string s, Expr *other);
     virtual void print(std::ostream& out);
     virtual void pretty_print_at(print_mode_t mode, std::ostream& out, int indentation, int inside);
 };
 
-class Variable : public Expr {
+class VarExpr : public Expr {
 public:
     std::string var;
-    Variable(std::string var);
+    VarExpr(std::string var);
     virtual bool equals(Expr *other);
     std::string getStr();
-    virtual int interp();
+    virtual Val* interp();
     virtual bool has_variable();
-    virtual Expr *subst(std::string s, Expr *other);
+    virtual Expr* subst(std::string s, Expr *other);
     virtual void print(std::ostream& out);
     virtual void pretty_print_at(print_mode_t mode, std::ostream& out, int indentation, int inside);
 };
 
-class Add : public Expr {
+class AddExpr : public Expr {
 public:
     Expr *lhs;
     Expr *rhs;
-    Add(Expr *lhs, Expr *rhs);
+    AddExpr(Expr *lhs, Expr *rhs);
     virtual bool equals(Expr *other);
-    virtual int interp();
+    virtual Val* interp();
     virtual bool has_variable();
-    virtual Expr *subst(std::string s, Expr *other);
+    virtual Expr* subst(std::string s, Expr *other);
     virtual void print(std::ostream& out);
     virtual void pretty_print_at(print_mode_t mode, std::ostream& out, int indentation, int inside);
 };
 
-class Mult : public Expr {
+class MultExpr : public Expr {
 public:
     Expr *lhs;
     Expr *rhs;
-    Mult(Expr *lhs, Expr *rhs);
+    MultExpr(Expr *lhs, Expr *rhs);
     virtual bool equals(Expr *other);
-    virtual int interp();
+    virtual Val* interp();
     virtual bool has_variable();
-    virtual Expr *subst(std::string s, Expr *other);
+    virtual Expr* subst(std::string s, Expr *other);
     virtual void print(std::ostream& out);
     virtual void pretty_print_at(print_mode_t mode, std::ostream& out, int indentation, int inside);
 };
 
-class _let : public Expr {
+class LetExpr : public Expr {
 public:
     std::string var;
     Expr *rhs;
     Expr *body;
-    _let(std::string var, Expr *rhs, Expr *body);
+    LetExpr(std::string var, Expr *rhs, Expr *body);
     virtual bool equals(Expr *other);
-    virtual int interp();
+    virtual Val* interp();
     virtual bool has_variable();
-    virtual Expr *subst(std::string s, Expr *other);
+    virtual Expr* subst(std::string s, Expr *other);
     virtual void print(std::ostream& out);
     virtual void pretty_print_at(print_mode_t mode, std::ostream& out, int indentation, int inside);
 };

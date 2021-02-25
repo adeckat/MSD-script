@@ -6,6 +6,7 @@
 //
 
 #include "expr.h"
+#include "val.h"
 #include <stdexcept>
 #include <stdio.h>
 
@@ -26,42 +27,42 @@ void Expr::pretty_print(std::ostream& out) {
 }
 
 //Num and its implementations
-Num::Num(int val) {
-    this->val = val;
+NumExpr::NumExpr(int numExpr) {
+    this->numExpr = numExpr;
 }
-bool Num::equals(Expr *other) {
-    Num *other_num = dynamic_cast<Num*>(other);
+bool NumExpr::equals(Expr *other) {
+    NumExpr *other_num = dynamic_cast<NumExpr*>(other);
     if (other_num == NULL) {
         return false;
     }
     else {
-        return (this->val == other_num->val);
+        return (this->numExpr == other_num->numExpr);
     }
 }
-int Num::interp() {
-    return this->val;
+Val *NumExpr::interp() {
+    return new NumVal(this->numExpr);
 }
-bool Num::has_variable() {
+bool NumExpr::has_variable() {
     return false;
 }
-Expr *Num::subst(std::string s, Expr *other) {
+Expr *NumExpr::subst(std::string s, Expr *other) {
     return this;
 }
-void Num::print(std::ostream& out) {
-    out << this->val;
+void NumExpr::print(std::ostream& out) {
+    out << this->numExpr;
 }
-void Num::pretty_print_at(print_mode_t mode, std::ostream& out, int indentation, int inside) {
+void NumExpr::pretty_print_at(print_mode_t mode, std::ostream& out, int indentation, int inside) {
     mode = print_group_none;
     inside = 0;
-    out << this->val;
+    out << this->numExpr;
 }
 
 //Variable and its implementation
-Variable::Variable (std::string var) {
+VarExpr::VarExpr (std::string var) {
     this->var = var; 
 }
-bool Variable::equals(Expr *other) {
-    Variable *other_var = dynamic_cast<Variable*>(other);
+bool VarExpr::equals(Expr *other) {
+    VarExpr *other_var = dynamic_cast<VarExpr*>(other);
     if (other_var == NULL) {
         return false;
     }
@@ -69,16 +70,16 @@ bool Variable::equals(Expr *other) {
         return (this->var == other_var->var);
     }
 }
-std::string Variable::getStr() {
+std::string VarExpr::getStr() {
     return this->var;
 }
-int Variable::interp() {
+Val *VarExpr::interp() {
     throw std::runtime_error("Variable(s) exist(s) in this expression");
 }
-bool Variable::has_variable() {
+bool VarExpr::has_variable() {
     return true;
 }
-Expr *Variable::subst(std::string s, Expr *other) {
+Expr *VarExpr::subst(std::string s, Expr *other) {
     if (this->var == s) {
         return other;
     }
@@ -86,22 +87,22 @@ Expr *Variable::subst(std::string s, Expr *other) {
         return this;
     }
 }
-void Variable::print(std::ostream& out) {
+void VarExpr::print(std::ostream& out) {
     out << this->var;
 }
-void Variable::pretty_print_at(print_mode_t mode, std::ostream& out, int indentation, int inside) {
+void VarExpr::pretty_print_at(print_mode_t mode, std::ostream& out, int indentation, int inside) {
     mode = print_group_none;
     inside = 0;
     out << this->var;
 }
 
 //Add and its implementation
-Add::Add(Expr *lhs, Expr *rhs) {
+AddExpr::AddExpr(Expr *lhs, Expr *rhs) {
     this->lhs = lhs;
     this->rhs = rhs;
 }
-bool Add::equals(Expr *other) {
-    Add *other_add = dynamic_cast<Add*>(other);
+bool AddExpr::equals(Expr *other) {
+    AddExpr *other_add = dynamic_cast<AddExpr*>(other);
     if (other_add == NULL) {
         return false;
     }
@@ -109,25 +110,25 @@ bool Add::equals(Expr *other) {
         return (this->lhs->equals(other_add->lhs) && this->rhs->equals(other_add->rhs));
     }
 }
-int Add::interp() {
-    return (this->lhs->interp() + this->rhs->interp());
+Val *AddExpr::interp() {
+    return (this->lhs->interp()->add_to(this->rhs->interp()));
 }
-bool Add::has_variable() {
+bool AddExpr::has_variable() {
     return (this->lhs->has_variable() || this->rhs->has_variable());
 }
-Expr *Add::subst(std::string s, Expr *other) {
+Expr *AddExpr::subst(std::string s, Expr *other) {
     Expr *other_lhs = this->lhs->subst(s, other);
     Expr *other_rhs = this->rhs->subst(s, other);
-    return new Add(other_lhs, other_rhs);
+    return new AddExpr(other_lhs, other_rhs);
 }
-void Add::print(std::ostream& out) {
+void AddExpr::print(std::ostream& out) {
     out << "("; 
     this->lhs->print(out);
     out << "+";
     this->rhs->print(out);
     out << ")";
 }
-void Add::pretty_print_at(print_mode_t mode, std::ostream& out, int indentation, int inside) {
+void AddExpr::pretty_print_at(print_mode_t mode, std::ostream& out, int indentation, int inside) {
     inside += 2;
     if (mode >= print_group_add) {
         out << "(";
@@ -141,12 +142,12 @@ void Add::pretty_print_at(print_mode_t mode, std::ostream& out, int indentation,
 }
 
 //Mult and its implementation
-Mult::Mult(Expr *lhs, Expr *rhs) {
+MultExpr::MultExpr(Expr *lhs, Expr *rhs) {
     this->lhs = lhs;
     this->rhs = rhs;
 }
-bool Mult::equals(Expr *other) {
-    Mult *other_mult = dynamic_cast<Mult*>(other);
+bool MultExpr::equals(Expr *other) {
+    MultExpr *other_mult = dynamic_cast<MultExpr*>(other);
     if (other_mult == NULL) {
         return false;
     }
@@ -154,25 +155,25 @@ bool Mult::equals(Expr *other) {
         return (this->lhs->equals(other_mult->lhs) && this->rhs->equals(other_mult->rhs));
     }
 }
-int Mult::interp() {
-    return (this->lhs->interp() * this->rhs->interp());
+Val * MultExpr::interp() {
+    return (this->lhs->interp()->mult_by(this->rhs->interp()));
 }
-bool Mult::has_variable() {
+bool MultExpr::has_variable() {
     return (this->lhs->has_variable() || this->rhs->has_variable());
 }
-Expr *Mult::subst(std::string s, Expr *other) {
+Expr *MultExpr::subst(std::string s, Expr *other) {
     Expr *other_lhs = this->lhs->subst(s, other);
     Expr *other_rhs = this->rhs->subst(s, other);
-    return new Mult(other_lhs, other_rhs);
+    return new MultExpr(other_lhs, other_rhs);
 }
-void Mult::print(std::ostream& out) {
+void MultExpr::print(std::ostream& out) {
     out << "(";
     this->lhs->print(out);
     out << "*";
     this->rhs->print(out);
     out << ")";
 }
-void Mult::pretty_print_at(print_mode_t mode, std::ostream& out, int indentation, int inside) {
+void MultExpr::pretty_print_at(print_mode_t mode, std::ostream& out, int indentation, int inside) {
     inside += 1;
     if (mode >= print_group_add_or_mult) {
         out << "(";
@@ -186,41 +187,41 @@ void Mult::pretty_print_at(print_mode_t mode, std::ostream& out, int indentation
 }
 
 //_let and its implementation
-_let::_let(std::string var, Expr *rhs, Expr *body) {
+LetExpr::LetExpr(std::string var, Expr *rhs, Expr *body) {
     this->var = var;
     this->rhs = rhs;
     this->body = body;
 }
-bool _let::equals(Expr *other) {
-    _let *other_let = dynamic_cast<_let*>(other);
+bool LetExpr::equals(Expr *other) {
+    LetExpr *other_let = dynamic_cast<LetExpr*>(other);
     if (other_let == NULL) {
         return false;
     }
     else {
-        return (this->var == other_let->var) && (this->rhs->equals(other_let->rhs))
-                                        && (this->body->equals(other_let->body));
+        return (this->var == other_let->var) && (this->rhs->equals(other_let->rhs)) && (this->body->equals(other_let->body));
     }
 }
-int _let::interp() {
-    return this->body->subst(var, this->rhs)->interp();
+Val *LetExpr::interp() {
+    Val* new_rhs = this->rhs->interp();
+    return this->body->subst(var, new_rhs->to_expr())->interp();
 }
-bool _let::has_variable() {
+bool LetExpr::has_variable() {
     return (this->rhs->has_variable() || this->body->has_variable());
 }
-Expr *_let::subst(std::string s, Expr *other) {
+Expr *LetExpr::subst(std::string s, Expr *other) {
     if (this->var == s) {
-        return new _let(s, this->rhs->subst(s, other), this->body);
+        return new LetExpr(s, this->rhs->subst(s, other), this->body);
     }
-    return new _let(this->var, this->rhs->subst(s, other), this->body->subst(s, other));
+    return new LetExpr(this->var, this->rhs->subst(s, other), this->body->subst(s, other));
 } 
-void _let::print(std::ostream& out) {
+void LetExpr::print(std::ostream& out) {
     out << "(_let " << this->var << "=";
     this->rhs->print(out);
     out << " _in ";
     this->body->print(out);
     out << ")";
 }
-void _let::pretty_print_at(print_mode_t mode, std::ostream& out, int indentation, int inside) {
+void LetExpr::pretty_print_at(print_mode_t mode, std::ostream& out, int indentation, int inside) {
     if (mode > print_group_none && inside > 1) {
         out << "(";
     }
