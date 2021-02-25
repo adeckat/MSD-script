@@ -33,7 +33,7 @@ void use_arguments(int argc, char * argv[]) {
             ExecResult interp_again1_result = exec_program(2, interp_argv, print_result.out);
             ExecResult interp_again2_result = exec_program(2, interp_argv, pretty_print_result.out);
             
-            if (print_result.exit_code == 1 || pretty_print_result.exit_code == 1) //
+            if (print_result.exit_code == 1 || pretty_print_result.exit_code == 1)
                 throw std::runtime_error("Non-zero exit 1");
             if (interp_result.exit_code == 0)
                 std::cout << "\tinterp okay\n";
@@ -64,20 +64,21 @@ void use_arguments(int argc, char * argv[]) {
             ExecResult print2_result = exec_program(2, print2_argv, in);
             ExecResult pretty_print2_result = exec_program(2, pretty_print2_argv, in);
 
-            if (print1_result.exit_code == 1 || pretty_print2_result.exit_code == 1)
+            if (print1_result.exit_code == 1 || print2_result.exit_code == 1 ||
+                pretty_print1_result.exit_code == 1 || pretty_print2_result.exit_code == 1)
                 throw std::runtime_error("Non-zero exit 4");
             if (interp1_result.exit_code == 0 && interp1_result.exit_code == 0)
                 std::cout << "\tinterp okay\n";
-            std::cout << interp1_result.out << std::endl;
-            std::cout << interp2_result.out << std::endl;
+//            std::cout << "Mine: " << interp1_result.out << std::endl;
+//            std::cout << "Yours: " << interp2_result.out << std::endl;
             if (interp1_result.out != interp2_result.out)
                 throw std::runtime_error("Different interp results");
-            std::cout << print1_result.out << std::endl;
-            std::cout << print2_result.out << std::endl;
+//            std::cout << "Mine: " << print1_result.out << std::endl;
+//            std::cout << "Yours: " <<  print2_result.out << std::endl;
             if (print1_result.out != print2_result.out)
                 throw std::runtime_error("Different print results");
-            std::cout << pretty_print1_result.out << std::endl;
-            std::cout << pretty_print2_result.out << std::endl;
+//            std::cout << "Mine: " << pretty_print1_result.out << std::endl;
+//            std::cout << "Yours: " <<  pretty_print2_result.out << std::endl;
             if (pretty_print1_result.out != pretty_print2_result.out)
                 throw std::runtime_error("Different pretty print results");
         }

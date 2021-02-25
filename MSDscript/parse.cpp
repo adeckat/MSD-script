@@ -69,7 +69,7 @@ Expr *parse_var(std::istream &in) {
 }
 
 Expr *parse_let(std::istream &in) {
-    in.get();
+    consume(in, '_');
     Expr *rhs, *body;
     std::string kw, var;
     kw = parse_keyword(in);
@@ -81,11 +81,14 @@ Expr *parse_let(std::istream &in) {
         skip_whitespace(in);
         if (in.peek() == '=') {
             consume(in, '=');
+            skip_whitespace(in);
             rhs = parse(in);
+            skip_whitespace(in);
             if (in.peek() == '_') {
                 consume(in, '_');
                 kw = parse_keyword(in);
                 if (kw == "in") {
+                    skip_whitespace(in);
                     body = parse(in);
                 } else {
                     throw std::runtime_error("E1 invalid input");

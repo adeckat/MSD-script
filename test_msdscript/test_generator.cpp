@@ -11,10 +11,10 @@
 
 //Create random string to test
 std::string random_string() {
-    if ((rand() % 10) < 6) {
+    if ((rand() % 10) < 5) {
         return random_expr_string();
     }
-    else if ((rand() % 10) >= 6 && (rand() % 10) < 8) {
+    else if ((rand() % 10) >= 5 && (rand() % 10) < 7.5) {
         return random_var_string();
     }
     else {

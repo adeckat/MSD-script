@@ -370,6 +370,9 @@ TEST_CASE("pretty_print") {
     toPrettyStr = "(17 * x) * (24 + y)";
     CHECK((new Mult(new Mult(val1, var1), new Add(val2, var2)))->to_pretty_str() == toPrettyStr);
     
+    toPrettyStr = "3 * 1 * 7 * _let x = 3\n            _in  _let x = 5\n                 _in  x + _let x = 5\n                          _in  x * 1";
+    CHECK((new Mult(new Num(3), new Mult(new Num(1), new Mult(new Num(7), new _let("x", new Num(3), new _let("x", new Num(5), new Add(new Variable("x"), new _let("x", new Num(5), new Mult(new Variable("x"), new Num(1))))))))))->to_pretty_str() == toPrettyStr); 
+    
     //_let tests
     toPrettyStr = "_let x = 5\n_in  (_let y = 3\n      _in  y + 2) + x";
     CHECK((new _let("x", new Num(5), new Add(new _let("y", new Num(3), new Add(var2, new Num(2))), var1)))->to_pretty_str() == toPrettyStr);
@@ -465,11 +468,21 @@ TEST_CASE("parse") {
     toString = "(_let x=5 _in ((_let y=3 _in (y+2))+x))";
     CHECK(parse_str("_let x = 5 _in (_let y=3 _in y+2) + x")->to_str() == toString);
     
+    toString = "(5*(-2*(_let v=7 _in (8+(j+(3+(12+-24)))))))";
+    CHECK(parse_str("5*-2* _let v=7 _in (8+(j+(3+(12 + -24))))")->to_str() == toString);
+    
+    toString = "(1851846184*(-463971904*(_let v=244238942 _in (854292678+(j+(1420341118+(1731904646+-184682208)))))))";
+    CHECK(parse_str("1851846184*-463971904*_let v=244238942 _in 854292678+j+1420341118+(1731904646+-184682208)")->to_str() == toString);
+   
+    toString = "(1851846184*(-463971904*(_let v=244238942 _in (854292678+(j+(1420341118+(1731904646+-184682208)))))))";
+
+    CHECK(parse_str("_let g = (( 1640673831   *     1530180174)  *     1245594262) +    400394691 * (1748932875    +        2046149670    +    -516825406     *         923276209  *        -311221049 * (    1083406562)     *    (   -1961824813)  +  (   477788852)  +       -258455836  *     -1564784251  * y    *    ( -1086070076     * (1140560236)     * (   1228626338)) *       1115829589 *    20997456     *  ( 628180126)  *     (    -814529647)     +      1721383963     *    (( -2079252445)  +        618597529)) _in  1077164021")->interp() == 1077164021);
+
     //pretty_print tests
     std::string toPrettyStr;
     toPrettyStr = "(17 + x) + 24";
     CHECK(parse_str("(17+x)+24")->to_pretty_str() == toPrettyStr);
-    
+     
     toPrettyStr = "17 * x + 24";
     CHECK(parse_str("17*x+24")->to_pretty_str() == toPrettyStr);
     
@@ -515,11 +528,15 @@ TEST_CASE("parse") {
     toPrettyStr = "5 * _let x = 5\n    _in  x + 1";
     CHECK(parse_str("5 * _let x=5 _in x+1")->to_pretty_str() == toPrettyStr);
 
-    toPrettyStr = "3 + 7 * _let x = 3\n        _in  _let x = 5\n             _in  x + _let x = 5\n                      _in  x * 1";
-    CHECK(parse_str("3+7 * (_let x=3 _in (_let x=5 _in x+(_let x=5 _in x*1)))")
+    toPrettyStr = "3 * 7 * _let x = 3\n        _in  _let x = 5\n             _in  x + _let x = 5\n                      _in  x * 1";
+    CHECK(parse_str("3*7 * (_let x=3 _in (_let x=5 _in x+(_let x=5 _in x*1)))")
         ->to_pretty_str() == toPrettyStr);
 
     toPrettyStr = "3 + 7 + _let x = 3\n        _in  _let x = 5\n             _in  x + _let x = 5\n                      _in  x * 1";
     CHECK(parse_str("3 + 7 + (_let x=3 _in (_let x=5 _in x+(_let x=5 _in x*1)))")
         ->to_pretty_str() == toPrettyStr);
+    
+    toPrettyStr = "1851846184 * -463971904 * _let v = 244238942\n                          _in  854292678 + j + 1420341118 + 1731904646 + -184682208";
+    CHECK(parse_str("1851846184*-463971904*_let v= 244238942 _in 854292678+j+1420341118+(1731904646+-184682208)")->to_pretty_str() == toPrettyStr);
 }
+ 
