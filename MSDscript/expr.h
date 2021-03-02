@@ -113,4 +113,42 @@ public:
     virtual void pretty_print_at(print_mode_t mode, std::ostream& out, int indentation, int inside);
 };
 
+class BoolExpr : public Expr {
+public:
+    bool boolExpr;
+    BoolExpr(bool boolExpr);
+    virtual bool equals(Expr *other);
+    virtual Val* interp();
+    virtual bool has_variable();
+    virtual Expr* subst(std::string s, Expr *other);
+    virtual void print(std::ostream& out);
+    virtual void pretty_print_at(print_mode_t mode, std::ostream& out, int indentation, int inside);
+};
+
+class EqExpr : public Expr {
+public:
+    Expr *lhs;
+    Expr *rhs;
+    EqExpr(Expr *lhs, Expr *rhs);
+    virtual bool equals(Expr *other);
+    virtual Val* interp();
+    virtual bool has_variable();
+    virtual Expr* subst(std::string s, Expr *other);
+    virtual void print(std::ostream& out);
+    virtual void pretty_print_at(print_mode_t mode, std::ostream& out, int indentation, int inside);
+};
+
+class IfExpr : public Expr {
+public:
+    Expr *test_part;
+    Expr *then_part;
+    Expr *else_part;
+    IfExpr(Expr *test_part, Expr *then_part, Expr *else_part);
+    virtual bool equals(Expr *other);
+    virtual Val* interp();
+    virtual bool has_variable();
+    virtual Expr* subst(std::string s, Expr *other);
+    virtual void print(std::ostream& out);
+    virtual void pretty_print_at(print_mode_t mode, std::ostream& out, int indentation, int inside);
+};
 #endif /* expr_h */

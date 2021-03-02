@@ -155,7 +155,7 @@ bool MultExpr::equals(Expr *other) {
         return (this->lhs->equals(other_mult->lhs) && this->rhs->equals(other_mult->rhs));
     }
 }
-Val * MultExpr::interp() {
+Val *MultExpr::interp() {
     return (this->lhs->interp()->mult_by(this->rhs->interp()));
 }
 bool MultExpr::has_variable() {
@@ -235,4 +235,141 @@ void LetExpr::pretty_print_at(print_mode_t mode, std::ostream& out, int indentat
     if (mode > print_group_none && inside > 1) {
         out << ")";
     }
+}
+
+//Bool and its implementations
+BoolExpr::BoolExpr(bool boolExpr) {
+    this->boolExpr = boolExpr; 
+}
+bool BoolExpr::equals(Expr *e) {
+    BoolExpr *other_bool = dynamic_cast<BoolExpr*>(e);
+    if (other_bool == NULL) {
+        return false;
+    }
+    else {
+        return (this->boolExpr == other_bool->boolExpr);
+    }
+
+}
+Val *BoolExpr::interp() {
+    return new BoolVal(this->boolExpr);
+}
+bool BoolExpr::has_variable() {
+    return false;
+}
+Expr *BoolExpr::subst(std::string var, Expr *e) {
+    return new BoolExpr(this->boolExpr);
+
+}
+void BoolExpr::print(std::ostream& out) {
+    if (this->boolExpr == true) {
+        out << "_true";
+    }
+    else {
+        out << "_false";
+    }
+}
+void BoolExpr::pretty_print_at(print_mode_t mode, std::ostream& out, int indentation, int inside) {
+    this->print(out);
+}
+
+//Equalation and its implementations
+EqExpr::EqExpr(Expr *lhs, Expr *rhs) {
+    this->lhs = lhs;
+    this->rhs = rhs;
+}
+bool EqExpr::equals(Expr *other) {
+    EqExpr *other_eq = dynamic_cast<EqExpr*>(other);
+    if (other_eq == NULL) {
+        return false;
+    }
+    else {
+        return (this->lhs->equals(other_eq->lhs) && this->rhs->equals(other_eq->rhs));
+    }
+}
+Val *EqExpr::interp() {
+    return new BoolVal((this->lhs->interp()->equals(this->rhs->interp())));
+}
+bool EqExpr::has_variable() {
+    return (this->lhs->has_variable() || this->rhs->has_variable());
+}
+Expr *EqExpr::subst(std::string s, Expr *other) {
+    Expr *other_lhs = this->lhs->subst(s, other);
+    Expr *other_rhs = this->rhs->subst(s, other);
+    return new EqExpr(other_lhs, other_rhs);
+}
+void EqExpr::print(std::ostream& out) {
+    out << "(";
+    this->lhs->print(out);
+    out << "==";
+    this->rhs->print(out);
+    out << ")";
+}
+void EqExpr::pretty_print_at(print_mode_t mode, std::ostream& out, int indentation, int inside) {
+    inside += 2;
+    this->lhs->pretty_print_at(print_group_add, out, indentation, inside);
+    out << " == ";
+    this->rhs->pretty_print_at(print_group_none, out, indentation, inside);
+}
+
+//If and its implementations
+IfExpr::IfExpr(Expr *test_part, Expr *then_part, Expr *else_part) {
+    this->test_part = test_part;
+    this->then_part = then_part;
+    this->else_part = else_part;
+}
+bool IfExpr::equals(Expr *e) {
+    IfExpr *other_if = dynamic_cast<IfExpr*>(e);
+    if (other_if == NULL) {
+        return false;
+    }
+    else {
+        return (this->test_part->equals(other_if->test_part)) &&
+                (this->then_part->equals(other_if->then_part)) &&
+                (this->else_part->equals(other_if->else_part));
+    }
+}
+Val *IfExpr::interp() {
+    if (this->test_part->interp()->is_true()) {
+        return this->then_part->interp();
+    }
+    else {
+        return this->else_part->interp();
+    }
+}
+bool IfExpr::has_variable() {
+    return (this->test_part->has_variable() || this->then_part->has_variable() ||
+            this->else_part->has_variable());
+}
+Expr * IfExpr::subst(std::string var, Expr *e) {
+    Expr *other_test = this->test_part->subst(var, e);
+    return new IfExpr(other_test, then_part, else_part);
+}
+void IfExpr::print(std::ostream& out) {
+    out << "(_if ";
+    this->test_part->print(out);
+    out << " _then ";
+    this->then_part->print(out);
+    out << " _else ";
+    this->else_part->print(out);
+    out << ")";
+}
+void IfExpr::pretty_print_at(print_mode_t mode, std::ostream& out, int indentation, int inside) {
+//    if (mode > print_group_none && inside > 1) {
+//        out << "(";
+//    }
+    int pos1 = (int) out.tellp();
+    out << "_if ";
+    this->test_part->pretty_print_at(print_group_none, out, indentation, 0);
+    out << "\n";
+    int pos2 = (int) out.tellp();
+    int n = pos1 - indentation;
+    out << std::string(n, ' ') << "_then ";
+    this->then_part->pretty_print_at(print_group_none, out, pos2, 0);
+    out << "\n";
+    out << std::string(n, ' ') << "_else ";
+    this->else_part->pretty_print_at(print_group_none, out, indentation, 0);
+//    if (mode > print_group_none && inside > 1) {
+//        out << ")";
+//    }
 }
