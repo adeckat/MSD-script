@@ -23,7 +23,7 @@ void use_arguments(int argc, char * argv[]) {
         const char * const pretty_print_argv[] = {argv[1], "--pretty-print"};
         
         for (int i = 0; i < 100; i++) {
-            std::string in = random_string();
+            std::string in = random_expr_string();
             std::cout << "Trying " << in << "\n"; 
             
             ExecResult interp_result = exec_program(2, interp_argv, in);
@@ -53,7 +53,7 @@ void use_arguments(int argc, char * argv[]) {
         const char * const pretty_print2_argv[] = {argv[2], "--pretty-print"};
         
         for (int i = 0; i < 100; i++) {
-            std::string in = random_string();
+            std::string in = random_expr_string();
             std::cout << "Trying " << in << "\n";
             
             ExecResult interp1_result = exec_program(2, interp1_argv, in);

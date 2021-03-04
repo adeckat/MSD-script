@@ -9,32 +9,35 @@
 #include <stdlib.h>
 #include "test_generator.h"
 
-//Create random string to test
-std::string random_string() {
-    if ((rand() % 10) < 5) {
-        return random_expr_string();
-    }
-    else if ((rand() % 10) >= 5 && (rand() % 10) < 7.5) {
-        return random_var_string();
-    }
-    else {
-        return random_let_string();
-    }
-}
-
 //Create random num, character, Add, and Mult by posibility
 std::string random_expr_string() {
-    if ((rand() % 10) < 6) {
-        return random_space() + random_sign() + std::to_string(rand());
+    int chance = rand() % 100;
+    if (chance < 44) {
+        return random_parentheses(random_space() + random_sign() + std::to_string(rand()));
     }
-    else if ((rand() % 10) == 6) {
-        return random_space() + random_char();
+    else if (chance >= 44 && chance < 51) {
+        return random_parentheses(random_space() + random_char());
     }
-    else if (((rand() % 10) >= 7) && ((rand() % 10) < 8.5)){
-        return random_parentheses(random_expr_string()) + random_space() + " + " + random_space() + random_parentheses(random_expr_string());
+    else if (chance >= 51 && chance < 58) {
+        return random_parentheses(random_space() + random_var_string());
+    }
+    else if (chance >= 58 && chance < 65){
+        return random_parentheses(random_space() + random_expr_string()) + random_space() + " + " + random_space() + random_parentheses(random_expr_string());
+    }
+    else if (chance >= 65 && chance < 72) {
+        return random_parentheses(random_space() + random_expr_string()) + random_space() + " * " + random_space() + random_parentheses(random_expr_string());
+    }
+    else if (chance >= 72 && chance < 79) {
+        return random_parentheses(random_bool());
+    }
+    else if (chance >= 79 && chance < 86) {
+        return random_parentheses(random_let_string());
+    }
+    else if (chance >= 86 && chance < 93) {
+        return random_parentheses(random_eq_string());
     }
     else {
-        return random_parentheses(random_expr_string()) + random_space() + " * " + random_space() + random_parentheses(random_expr_string());
+        return random_parentheses(random_if_string());
     }
 }
 
@@ -50,7 +53,19 @@ std::string random_var_string() {
 
 //Create random let
 std::string random_let_string() {
-    std::string str = "_let " + random_char() + " = " + random_expr_string() + " _in " + random_expr_string();
+    std::string str = "_let " + random_space() + random_char() + random_space() + " = " + random_space() + random_expr_string() + random_space() + " _in " + random_space() + random_expr_string();
+    return str;
+}
+
+//Create random equation
+std::string random_eq_string() {
+    std::string str = random_space() + random_expr_string() + random_space() + " == " + random_space() + random_expr_string();
+    return str;
+}
+
+//Create random if
+std::string random_if_string() {
+    std::string str = "_if " + random_space() + random_expr_string() + random_space() + "_then " + random_space() + random_expr_string() + random_space() + " _else " + random_space() + random_expr_string();
     return str;
 }
 
@@ -62,6 +77,16 @@ std::string random_char() {
     return character;
 }
 
+//Create random boolean
+std::string random_bool() {
+    int boolean = rand() % 10;
+    if (boolean < 5) {
+        return "_true";
+    }
+    else {
+        return "_false";
+    }
+}
 //Create random space
 std::string random_space() {
     int space = rand() % 5;

@@ -13,12 +13,14 @@
 #include <string>
 #include <vector>
 
-std::string random_string();
 std::string random_expr_string();
 std::string random_var_string();
 std::string random_let_string();
+std::string random_eq_string();
+std::string random_if_string();
 std::string random_char();
 std::string random_space();
 std::string random_sign();
+std::string random_bool();
 std::string random_parentheses(std::string in);
 #endif /* test_generator_hpp */

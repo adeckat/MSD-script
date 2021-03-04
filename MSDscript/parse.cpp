@@ -80,17 +80,17 @@ Expr *parse_multicand(std::istream &in) {
     }
     else if (c == '_') {
         consume(in, '_');
-        c = in.peek();
-        if (c == 'l') {
+        std::string kw = parse_keyword(in);
+        if (kw == "let") {
             return parse_let(in);
         }
-        else if (c == 't') {
+        else if (kw == "true") {
             return parse_true(in);
         }
-        else if (c =='f') {
+        else if (kw == "false") {
             return parse_false(in);
         }
-        else if (c =='i') {
+        else if (kw == "if") {
             return parse_if(in);
         }
         else {
@@ -146,140 +146,74 @@ Expr *parse_var(std::istream &in) {
 }
 
 Expr *parse_let(std::istream &in) {
-    Expr *rhs, *body;
+    Expr *lhs, *rhs, *body;
     std::string kw, var;
-    kw = parse_let_keyword(in);
-    if (kw == "let") {
-        skip_whitespace(in);
-        Expr *e = parse_var(in);
-        VarExpr *other_e = dynamic_cast<VarExpr*>(e);
-        var = other_e->getStr();
-        skip_whitespace(in);
-        if (in.peek() == '=') {
-            consume(in, '=');
-            skip_whitespace(in);
-            rhs = parse_expr(in);
-            skip_whitespace(in);
-            if (in.peek() == '_') {
-                consume(in, '_');
-                kw = parse_let_keyword(in);
-                if (kw == "in") {
-                    skip_whitespace(in);
-                    body = parse_expr(in);
-                } else {
-                    throw std::runtime_error("E3 invalid input");
-                }
-            } else {
-                throw std::runtime_error("E4 invalid input");
-            }
-        } else {
-            throw std::runtime_error("E5 invalid input");
-        }
-        return new LetExpr(var, rhs, body);
-    }
-    else {
-        throw std::runtime_error("E6 invalid input");
-    }
+    skip_whitespace(in);
+    lhs = parse_var(in);
+    VarExpr *other_lhs = dynamic_cast<VarExpr*>(lhs);
+    var = other_lhs->getStr();
+    skip_whitespace(in);
+    consume(in, '=');
+    rhs = parse_expr(in);
+    skip_whitespace(in);
+    consume(in, '_');
+    kw = parse_keyword(in);
+    if (kw != "in")
+        throw std::runtime_error("E4 invalid input");
+    body = parse_expr(in);
+    return new LetExpr(var, rhs, body); 
 }
 
 Expr *parse_if(std::istream &in) {
     Expr *test_part, *then_part, *else_part;
     std::string kw;
-    kw = parse_if_keyword(in);
-    if (kw == "if") {
-        skip_whitespace(in);
-        test_part = parse_expr(in);
-        skip_whitespace(in);
-        if (in.peek() == '_') {
-            consume(in, '_');
-            kw = parse_if_keyword(in);
-            if (kw == "then") {
-                skip_whitespace(in);
-                then_part = parse_expr(in);
-                skip_whitespace(in);
-                if (in.peek() == '_') {
-                    consume(in, '_');
-                    kw = parse_if_keyword(in);
-                    if (kw == "else") {
-                        skip_whitespace(in);
-                        else_part = parse_expr(in);
-                    } else {
-                        throw std::runtime_error("E7 invalid input");
-                    }
-                } else {
-                    throw std::runtime_error("E8 invalid input");
-                }
-            } else {
-                throw std::runtime_error("E9 invalid input");
-            }
-        }
-        else {
-            throw std::runtime_error("E10 invalid input");
-        }
-        return new IfExpr(test_part, then_part, else_part);
-    }
-    else {
-        throw std::runtime_error("E11 invalid input");
-    }
+    test_part = parse_expr(in);
+    skip_whitespace(in);
+    consume(in, '_');
+    kw = parse_keyword(in);
+    if (kw != "then")
+        throw std::runtime_error("E6 invalid input");
+    then_part = parse_expr(in);
+    skip_whitespace(in);
+    consume(in, '_');
+    kw = parse_keyword(in);
+    if (kw != "else")
+        throw std::runtime_error("E7 invalid input");
+    else_part = parse_expr(in);
+    return new IfExpr(test_part, then_part, else_part);
 }
 
 Expr *parse_true(std::istream &in) {
-    std::string kw = parse_bool_keyword(in);
-    if (kw == "true") {
-        return new BoolExpr(true);
-    } else {
-        throw std::runtime_error("E12 invalid input");
-    }
+    return new BoolExpr(true);
 }
 
 Expr *parse_false(std::istream &in) {
-    std::string kw = parse_bool_keyword(in);
-    if (kw == "false") {
-        return new BoolExpr(false);
-    } else {
-        throw std::runtime_error("E13 invalid input");
-    }
+    return new BoolExpr(false);
 }
 
-std::string parse_let_keyword(std::istream &in) {
+std::string parse_keyword(std::istream &in) {
     Expr *kw = parse_var(in);
     VarExpr *other_e = dynamic_cast<VarExpr*>(kw);
     std::string var = other_e->getStr();
     if (var == "let" || var == "in") {
         return var;
     }
-    else {
-        throw std::runtime_error("E1 invalid keyword");
+    else if (var == "true" || var == "false") {
+        return var;
     }
-}
-
-std::string parse_bool_keyword(std::istream &in) {
-    Expr *kw = parse_var(in);
-    VarExpr *other_e = dynamic_cast<VarExpr*>(kw);
-    std::string var = other_e->getStr();
-    if (var == "true" || var == "false") {
+    else if (var == "if" || var == "then" || var == "else") {
         return var;
     }
     else {
-        throw std::runtime_error("E2 invalid keyword");
-    }
-}
-
-std::string parse_if_keyword(std::istream &in) {
-    Expr *kw = parse_var(in);
-    VarExpr *other_e = dynamic_cast<VarExpr*>(kw);
-    std::string var = other_e->getStr();
-    if (var == "if" || var == "then" || var == "else") {
-        return var;
-    }
-    else {
-        throw std::runtime_error("E3 invalid keyword");
+        throw std::runtime_error("Invalid keyword");
     }
 }
 
 static void consume(std::istream &in, int expect) {
     int c = in.get();
-    assert(c == expect);
+    if (c != expect) {
+        throw std::runtime_error("Consume mismatch");
+    }
 }
 
 static void skip_whitespace(std::istream &in) {

@@ -523,6 +523,15 @@ TEST_CASE("pretty_print") {
     
     toPrettyStr = "_let same = 1 == 2\n_in  _if 1 == 2\n     _then _false + 5\n     _else 88";
     CHECK((new LetExpr("same", new EqExpr(new NumExpr(1), new NumExpr(2)), new IfExpr(new EqExpr(new NumExpr(1), new NumExpr(2)), new AddExpr(new BoolExpr(false), new NumExpr(5)), new NumExpr(88))))->to_pretty_str() == toPrettyStr);
+    
+    toPrettyStr = "(_let x = 17\n _in  x) * 24";
+    CHECK((new MultExpr(new LetExpr("x", val1, var1), val2))->to_pretty_str() == toPrettyStr);
+    
+    toPrettyStr = "_let x = 1 == 2\n_in  _let same = x\n     _in  _if 3 == 4\n          _then _false\n          _else _true";
+    CHECK((new LetExpr("x", new EqExpr(new NumExpr(1), new NumExpr(2)), new LetExpr("same", new VarExpr("x"), new IfExpr(new EqExpr(new NumExpr(3), new NumExpr(4)), new BoolExpr(false), new BoolExpr(true)))))->to_pretty_str() == toPrettyStr);
+    
+    toPrettyStr = "(_let x = 1 == 2\n _in  _let same = x\n      _in  _if 3 == 4\n           _then _false\n           _else _true) + 17";
+    CHECK((new AddExpr(new LetExpr("x", new EqExpr(new NumExpr(1), new NumExpr(2)), new LetExpr("same", new VarExpr("x"), new IfExpr(new EqExpr(new NumExpr(3), new NumExpr(4)), new BoolExpr(false), new BoolExpr(true)))), val1))->to_pretty_str() == toPrettyStr);
 }
 
 TEST_CASE("parse") {
@@ -542,25 +551,29 @@ TEST_CASE("parse") {
     CHECK(parse_str("_let x = 17 _in x + 24")->interp()->equals(new NumVal(41)));
     CHECK_THROWS_WITH(parse_str("(17 + 17) * (24 + 24")->interp(),"Missing close parenthesis");
     CHECK_THROWS_WITH(parse_str("x = 17")->interp(), "Missing the second equal sign");
-    CHECK_THROWS_WITH(parse_str("_nope x = 17 _in x + 24")->interp(), "E1 invalid input");
-    CHECK_THROWS_WITH(parse_str("_lem x = 17 _in x + 24")->interp(), "E1 invalid keyword");
-    CHECK_THROWS_WITH(parse_str("_let x = 17 _int x + 24")->interp(), "E1 invalid keyword");
-    CHECK_THROWS_WITH(parse_str("_let x = 17 in x + 24")->interp(), "E4 invalid input");
-    CHECK_THROWS_WITH(parse_str("_let x + 17 _in x + 24")->interp(), "E5 invalid input");
+    CHECK_THROWS_WITH(parse_str("_nope x = 17 _in x + 24")->interp(), "Invalid keyword");
+    CHECK_THROWS_WITH(parse_str("_lem x = 17 _in x + 24")->interp(), "Invalid keyword");
+    CHECK_THROWS_WITH(parse_str("_let x = 17 _int x + 24")->interp(), "Invalid keyword");
+    CHECK_THROWS_WITH(parse_str("_let x = 17 in x + 24")->interp(), "Consume mismatch");
+    CHECK_THROWS_WITH(parse_str("_in x = 17 _let x + 24")->interp(), "E1 invalid input");
+    CHECK_THROWS_WITH(parse_str("_let x = 17 _let x + 24")->interp(), "E4 invalid input");
+    CHECK_THROWS_WITH(parse_str("_let x + 17 _in x + 24")->interp(), "Consume mismatch");
     CHECK_THROWS_WITH(parse_str("*let x + 17 _in x + 24")->interp(), "E2 invalid input");
     CHECK_THROWS_WITH(parse_str("-x")->interp(), "Invalid input");
     
     CHECK(parse_str("_if 17 == 17 _then 1 _else 0")->interp()->equals(new NumVal(1)));
-    CHECK_THROWS_WITH(parse_str("_in x == 17 _then 1 _else 0")->interp(), "E3 invalid keyword");
-    CHECK_THROWS_WITH(parse_str("_if x == 17 _than 1 _else 0")->interp(), "E3 invalid keyword");
-    CHECK_THROWS_WITH(parse_str("_if x == 17 _then 1 _els 0")->interp(), "E3 invalid keyword");
-    CHECK_THROWS_WITH(parse_str("_if x == 17 *then 1 _else 0")->interp(), "E10 invalid input");
-    CHECK_THROWS_WITH(parse_str("_if x == 17 _then 1 -else 0")->interp(), "E8 invalid input");
+    CHECK_THROWS_WITH(parse_str("_in x == 17 _then 1 _else 0")->interp(), "E1 invalid input");
+    CHECK_THROWS_WITH(parse_str("_if x == 17 _than 1 _else 0")->interp(), "Invalid keyword");
+    CHECK_THROWS_WITH(parse_str("_if x == 17 _then 1 _els 0")->interp(), "Invalid keyword");
+    CHECK_THROWS_WITH(parse_str("_if x == 17 *then 1 _else 0")->interp(), "Consume mismatch");
+    CHECK_THROWS_WITH(parse_str("_if x == 17 _then 1 -else 0")->interp(), "Consume mismatch");
+    CHECK_THROWS_WITH(parse_str("_if x == 17 _else 1 _else 0")->interp(), "E6 invalid input");
+    CHECK_THROWS_WITH(parse_str("_if x == 17 _then 1 _then 0")->interp(), "E7 invalid input");
     
     CHECK(parse_str("_if _true _then 1 _else 0")->interp()->equals(new NumVal(1)));
     CHECK(parse_str("_if _false _then 1 _else 0")->interp()->equals(new NumVal(0)));
-    CHECK_THROWS_WITH(parse_str("_if _tru _then 1 _else 0")->interp(), "E2 invalid keyword");
-    CHECK_THROWS_WITH(parse_str("_if _fals _then 1 _else 0")->interp(),"E2 invalid keyword");
+    CHECK_THROWS_WITH(parse_str("_if _tru _then 1 _else 0")->interp(), "Invalid keyword");
+    CHECK_THROWS_WITH(parse_str("_if _fals _then 1 _else 0")->interp(),"Invalid keyword");
     
     
     //print tests
@@ -712,3 +725,4 @@ TEST_CASE("parse") {
     CHECK(parse_str("(_let same = (1==2)   _in _if (1==2) _then (_false + 5) _else (88))")->to_pretty_str() == toPrettyStr);
 }
  
+

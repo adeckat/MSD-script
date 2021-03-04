@@ -222,7 +222,7 @@ void LetExpr::print(std::ostream& out) {
     out << ")";
 }
 void LetExpr::pretty_print_at(print_mode_t mode, std::ostream& out, int indentation, int inside) {
-    if (mode > print_group_none && inside > 1) {
+    if (mode > print_group_none && inside >= 1) {
         out << "(";
     }
     int pos1 = (int) out.tellp();
@@ -232,7 +232,7 @@ void LetExpr::pretty_print_at(print_mode_t mode, std::ostream& out, int indentat
     int pos2 = (int) out.tellp();
     out << std::string(pos1 - indentation, ' ') << "_in  ";
     this->body->pretty_print_at(print_group_none, out, pos2, inside);
-    if (mode > print_group_none && inside > 1) {
+    if (mode > print_group_none && inside >= 1) {
         out << ")";
     }
 }
@@ -307,9 +307,15 @@ void EqExpr::print(std::ostream& out) {
 }
 void EqExpr::pretty_print_at(print_mode_t mode, std::ostream& out, int indentation, int inside) {
     inside += 2;
+    if (mode >= print_group_add) {
+        out << "(";
+    }
     this->lhs->pretty_print_at(print_group_add, out, indentation, inside);
     out << " == ";
-    this->rhs->pretty_print_at(print_group_none, out, indentation, inside);
+    this->rhs->pretty_print_at(print_group_none, out, indentation, 0);
+    if (mode >= print_group_add) {
+        out << ")";
+    }
 }
 
 //If and its implementations
@@ -343,7 +349,9 @@ bool IfExpr::has_variable() {
 }
 Expr * IfExpr::subst(std::string var, Expr *e) {
     Expr *other_test = this->test_part->subst(var, e);
-    return new IfExpr(other_test, then_part, else_part);
+    Expr *other_then = this->then_part->subst(var, e);
+    Expr *other_else = this->else_part->subst(var, e);
+    return new IfExpr(other_test, other_then, other_else);
 }
 void IfExpr::print(std::ostream& out) {
     out << "(_if ";
@@ -355,21 +363,21 @@ void IfExpr::print(std::ostream& out) {
     out << ")";
 }
 void IfExpr::pretty_print_at(print_mode_t mode, std::ostream& out, int indentation, int inside) {
-//    if (mode > print_group_none && inside > 1) {
-//        out << "(";
-//    }
+    if (mode > print_group_none && inside >= 1) {
+        out << "(";
+    }
     int pos1 = (int) out.tellp();
     out << "_if ";
-    this->test_part->pretty_print_at(print_group_none, out, indentation, 0);
+    this->test_part->pretty_print(out);
     out << "\n";
     int pos2 = (int) out.tellp();
     int n = pos1 - indentation;
     out << std::string(n, ' ') << "_then ";
-    this->then_part->pretty_print_at(print_group_none, out, pos2, 0);
+    this->then_part->pretty_print_at(print_group_none, out, pos2, inside);
     out << "\n";
     out << std::string(n, ' ') << "_else ";
-    this->else_part->pretty_print_at(print_group_none, out, indentation, 0);
-//    if (mode > print_group_none && inside > 1) {
-//        out << ")";
-//    }
+    this->else_part->pretty_print(out);
+    if (mode > print_group_none && inside >= 1) {
+        out << ")";
+    }
 }
