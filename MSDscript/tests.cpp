@@ -503,6 +503,9 @@ TEST_CASE("pretty_print") {
     toPrettyStr = "x == 17";
     CHECK((new EqExpr(var1, val1))->to_pretty_str() == toPrettyStr);
     
+    toPrettyStr = "(1 == 2) == 3";
+    CHECK((new EqExpr(new EqExpr(new NumExpr(1), new NumExpr(2)), new NumExpr(3)))->to_pretty_str() == toPrettyStr);
+    
     toPrettyStr = "(1 + 2) == 3";
     CHECK((new EqExpr(new AddExpr(new NumExpr(1), new NumExpr(2)), new NumExpr(3)))->to_pretty_str() == toPrettyStr);
     
@@ -521,6 +524,9 @@ TEST_CASE("pretty_print") {
     toPrettyStr = "_if x == 17\n_then 1\n_else 0";
     CHECK((new IfExpr(new EqExpr(var1, val1), new NumExpr(1), new NumExpr(0)))->to_pretty_str() == toPrettyStr);
     
+    toPrettyStr = "(_if x == 17\n _then 1\n _else 0) == 17";
+    CHECK((new EqExpr(new IfExpr(new EqExpr(var1, val1), new NumExpr(1), new NumExpr(0)), val1))->to_pretty_str() == toPrettyStr);
+    
     toPrettyStr = "_let same = 1 == 2\n_in  _if 1 == 2\n     _then _false + 5\n     _else 88";
     CHECK((new LetExpr("same", new EqExpr(new NumExpr(1), new NumExpr(2)), new IfExpr(new EqExpr(new NumExpr(1), new NumExpr(2)), new AddExpr(new BoolExpr(false), new NumExpr(5)), new NumExpr(88))))->to_pretty_str() == toPrettyStr);
     
@@ -532,6 +538,15 @@ TEST_CASE("pretty_print") {
     
     toPrettyStr = "(_let x = 1 == 2\n _in  _let same = x\n      _in  _if 3 == 4\n           _then _false\n           _else _true) + 17";
     CHECK((new AddExpr(new LetExpr("x", new EqExpr(new NumExpr(1), new NumExpr(2)), new LetExpr("same", new VarExpr("x"), new IfExpr(new EqExpr(new NumExpr(3), new NumExpr(4)), new BoolExpr(false), new BoolExpr(true)))), val1))->to_pretty_str() == toPrettyStr);
+    
+//    _if x
+//    _then _true
+//    _else _let Y = _let F = 17
+//                   _in  S * 24 == 17
+//          _in  _true
+//    CHECK((new IfExpr(new VarExpr("x"), new BoolExpr(true), new LetExpr("Y", new LetExpr("F", new NumExpr(17), new EqExpr(new MultExpr(new VarExpr("S"), new NumExpr(24)), new NumExpr(17))), new BoolExpr(true))))->to_pretty_str() == "");
+//
+//    CHECK((new IfExpr(new VarExpr("x"), new IfExpr(new VarExpr("x"), new VarExpr("y"), new MultExpr(new NumExpr(17), new NumExpr(24))), new EqExpr(new IfExpr(new EqExpr(new BoolExpr(true), new NumExpr(17)), new IfExpr(new VarExpr("x"), new LetExpr("c", new NumExpr(17), new MultExpr(new NumExpr(17), new NumExpr(24))), new IfExpr(new NumExpr(17), new MultExpr(new VarExpr("G"), new NumExpr(24)), new BoolExpr(true))), new AddExpr(new BoolExpr(true), new NumExpr(24))), new VarExpr("y"))))->to_pretty_str() == "");
 }
 
 TEST_CASE("parse") {
@@ -723,6 +738,6 @@ TEST_CASE("parse") {
     
     toPrettyStr = "_let same = 1 == 2\n_in  _if 1 == 2\n     _then _false + 5\n     _else 88";
     CHECK(parse_str("(_let same = (1==2)   _in _if (1==2) _then (_false + 5) _else (88))")->to_pretty_str() == toPrettyStr);
+    
+//    CHECK(parse_str("_if     1311433591   _then  _if     X  _then       F  _else        -1625335828   *   _false _else    (_if     _true   ==    32309537_then _if     L  _then     _let   c =  1362618119 _in    (-977663374)   *   eQHMjGAEBk _else       -7896479  == (_if     -1725426414   _then     G   *         174797107    _else     _true)     _else    _true    +    -1128812070)   ==     MABowbMNz")->to_pretty_str() == " ");
 }
- 
-
