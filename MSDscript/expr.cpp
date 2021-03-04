@@ -266,10 +266,11 @@ void LetExpr::pretty_print_at(print_mode_t mode, std::ostream& out, int indentat
     }
     int pos1 = (int) out.tellp();
     out << "_let " << this->var << " = ";
-    this->rhs->pretty_print(out);
+    this->rhs->pretty_print_at(print_group_none, out, indentation, inside);
     out << "\n";
     int pos2 = (int) out.tellp();
-    out << std::string(pos1 - indentation, ' ') << "_in  ";
+    int n = pos1 - indentation;
+    out << std::string(n, ' ') << "_in  ";
     this->body->pretty_print_at(print_group_none, out, pos2, inside);
     if (mode > print_group_none && inside >= 1) {
         out << ")";
