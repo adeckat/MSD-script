@@ -14,6 +14,7 @@ Expr *parse_str(std::string s){
     return parse_expr(str);
 }
 
+//Parse an expr
 Expr *parse_expr(std::istream &in) {
     Expr *e;
     e = parse_comparg(in);
@@ -34,6 +35,7 @@ Expr *parse_expr(std::istream &in) {
         return e;
 }
 
+//Parse a comparg
 Expr *parse_comparg(std::istream &in) {
     Expr *e;
     e = parse_addend(in);
@@ -47,6 +49,7 @@ Expr *parse_comparg(std::istream &in) {
         return e;
 }
 
+//Parse an addend
 Expr *parse_addend(std::istream &in) {
     Expr *e;
     e = parse_multicand(in);
@@ -60,6 +63,7 @@ Expr *parse_addend(std::istream &in) {
         return e;
 }
 
+//Parse a muticand
 Expr *parse_multicand(std::istream &in) {
     skip_whitespace(in);
     int c = in.peek();
@@ -103,6 +107,7 @@ Expr *parse_multicand(std::istream &in) {
     }
 }
 
+//Parse a num expr
 Expr *parse_num(std::istream &in) {
     int n = 0;
     bool negative = false;
@@ -129,6 +134,7 @@ Expr *parse_num(std::istream &in) {
     return new NumExpr(n);
 }
 
+//Parse a var epxr
 Expr *parse_var(std::istream &in) {
     int c;
     std::string str;
@@ -145,6 +151,7 @@ Expr *parse_var(std::istream &in) {
     return new VarExpr(str);
 }
 
+//Parse a _let expr
 Expr *parse_let(std::istream &in) {
     Expr *lhs, *rhs, *body;
     std::string kw, var;
@@ -164,6 +171,7 @@ Expr *parse_let(std::istream &in) {
     return new LetExpr(var, rhs, body); 
 }
 
+//Parse an _if expr
 Expr *parse_if(std::istream &in) {
     Expr *test_part, *then_part, *else_part;
     std::string kw;
@@ -183,14 +191,17 @@ Expr *parse_if(std::istream &in) {
     return new IfExpr(test_part, then_part, else_part);
 }
 
+//Parse a _true epxr
 Expr *parse_true(std::istream &in) {
     return new BoolExpr(true);
 }
 
+//Parse a _false expr
 Expr *parse_false(std::istream &in) {
     return new BoolExpr(false);
 }
 
+//Parse keywords
 std::string parse_keyword(std::istream &in) {
     Expr *kw = parse_var(in);
     VarExpr *other_e = dynamic_cast<VarExpr*>(kw);

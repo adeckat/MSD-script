@@ -17,6 +17,7 @@ void use_arguments(int argc, char * argv[]) {
     }
     else if (argc >= 2) {
         for (int i = 1; i < argc; i++) {
+            //List of valid arguments
             if (argv[i] == (std::string)"--help") {
                 std::cout << "These arguments are allowed to use:\n";
                 std::cout << "\t--help: list of available argument\n";
@@ -26,6 +27,7 @@ void use_arguments(int argc, char * argv[]) {
                 std::cout << "\t--pretty-print: print the standard input expression in a pretty way\n";
                 exit(0);
             }
+            //Run test
             if (argv[i] == (std::string)"--test") {
                 if (i == 1) {
                     int result = Catch::Session().run();
@@ -41,24 +43,28 @@ void use_arguments(int argc, char * argv[]) {
                     exit(1);
                 }
             }
+            //Run interp
             if (argv[i] == (std::string)"--interp") {
                 Expr* n = parse_expr(std::cin);
                 std::cout << n->interp()->to_expr()->to_str();
                 std::cout << "\n";
                 exit(0);
             }
+            //Run print
             if (argv[i] == (std::string)"--print") {
                 Expr* n = parse_expr(std::cin);
                 n->print(std::cout);
                 std::cout << "\n";
                 exit(0);
             }
+            //Run pretty print
             if (argv[i] == (std::string)"--pretty-print") {
                 Expr* n = parse_expr(std::cin);
                 std::cout << n->to_pretty_str();
                 std::cout << "\n";
                 exit(0);
             }
+            //Invalid argument error
             else {
                 std::cerr<<"Error: The argument '" << argv[i] << "' is not allowed\n";
                 exit(1);
