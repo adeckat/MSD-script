@@ -22,9 +22,6 @@ public:
     //Return an int for the value of an expression
     virtual Val* interp() = 0;
     
-    //Return true if the expression is a variable or contains a variable, and false otherwise
-    virtual bool has_variable() = 0;
-    
     //Return a new expression with the new replaced variable when the original expression contains
     //a variable matching the string of subst method
     virtual Expr* subst(std::string s, Expr *e) = 0;
@@ -54,7 +51,6 @@ public:
     NumExpr(int numExpr);
     virtual bool equals(Expr *other);
     virtual Val* interp();
-    virtual bool has_variable();
     virtual Expr* subst(std::string s, Expr *other);
     virtual void print(std::ostream& out);
     virtual void pretty_print_at(print_mode_t mode, std::ostream& out, int indentation, int inside);
@@ -67,7 +63,6 @@ public:
     virtual bool equals(Expr *other);
     std::string getStr();
     virtual Val* interp();
-    virtual bool has_variable();
     virtual Expr* subst(std::string s, Expr *other);
     virtual void print(std::ostream& out);
     virtual void pretty_print_at(print_mode_t mode, std::ostream& out, int indentation, int inside);
@@ -80,7 +75,6 @@ public:
     AddExpr(Expr *lhs, Expr *rhs);
     virtual bool equals(Expr *other);
     virtual Val* interp();
-    virtual bool has_variable();
     virtual Expr* subst(std::string s, Expr *other);
     virtual void print(std::ostream& out);
     virtual void pretty_print_at(print_mode_t mode, std::ostream& out, int indentation, int inside);
@@ -93,7 +87,6 @@ public:
     MultExpr(Expr *lhs, Expr *rhs);
     virtual bool equals(Expr *other);
     virtual Val* interp();
-    virtual bool has_variable();
     virtual Expr* subst(std::string s, Expr *other);
     virtual void print(std::ostream& out);
     virtual void pretty_print_at(print_mode_t mode, std::ostream& out, int indentation, int inside);
@@ -107,7 +100,6 @@ public:
     LetExpr(std::string var, Expr *rhs, Expr *body);
     virtual bool equals(Expr *other);
     virtual Val* interp();
-    virtual bool has_variable();
     virtual Expr* subst(std::string s, Expr *other);
     virtual void print(std::ostream& out);
     virtual void pretty_print_at(print_mode_t mode, std::ostream& out, int indentation, int inside);
@@ -119,7 +111,6 @@ public:
     BoolExpr(bool boolExpr);
     virtual bool equals(Expr *other);
     virtual Val* interp();
-    virtual bool has_variable();
     virtual Expr* subst(std::string s, Expr *other);
     virtual void print(std::ostream& out);
     virtual void pretty_print_at(print_mode_t mode, std::ostream& out, int indentation, int inside);
@@ -132,7 +123,6 @@ public:
     EqExpr(Expr *lhs, Expr *rhs);
     virtual bool equals(Expr *other);
     virtual Val* interp();
-    virtual bool has_variable();
     virtual Expr* subst(std::string s, Expr *other);
     virtual void print(std::ostream& out);
     virtual void pretty_print_at(print_mode_t mode, std::ostream& out, int indentation, int inside);
@@ -146,7 +136,30 @@ public:
     IfExpr(Expr *test_part, Expr *then_part, Expr *else_part);
     virtual bool equals(Expr *other);
     virtual Val* interp();
-    virtual bool has_variable();
+    virtual Expr* subst(std::string s, Expr *other);
+    virtual void print(std::ostream& out);
+    virtual void pretty_print_at(print_mode_t mode, std::ostream& out, int indentation, int inside);
+};
+
+class FunExpr : public Expr {
+public:
+    std::string formal_arg;
+    Expr *body;
+    FunExpr(std::string formal_arg, Expr *body);
+    virtual bool equals(Expr *other);
+    virtual Val* interp();
+    virtual Expr* subst(std::string s, Expr *other);
+    virtual void print(std::ostream& out);
+    virtual void pretty_print_at(print_mode_t mode, std::ostream& out, int indentation, int inside);
+};
+
+class CallExpr : public Expr {
+public:
+    Expr *to_be_called;
+    Expr *actual_arg;
+    CallExpr(Expr *to_be_called, Expr *actual_arg);
+    virtual bool equals(Expr *other);
+    virtual Val* interp();
     virtual Expr* subst(std::string s, Expr *other);
     virtual void print(std::ostream& out);
     virtual void pretty_print_at(print_mode_t mode, std::ostream& out, int indentation, int inside);

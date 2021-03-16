@@ -12,32 +12,38 @@
 //Create random num, character, Add, and Mult by posibility
 std::string random_expr_string() {
     int chance = rand() % 100;
-    if (chance < 44) {
+    if (chance < 40) {
         return random_parentheses(random_space() + random_sign() + std::to_string(rand()));
     }
-    else if (chance >= 44 && chance < 51) {
+    else if (chance >= 40 && chance < 46) {
         return random_parentheses(random_space() + random_char());
     }
-    else if (chance >= 51 && chance < 58) {
+    else if (chance >= 46 && chance < 52) {
         return random_parentheses(random_space() + random_var_string());
     }
-    else if (chance >= 58 && chance < 65){
+    else if (chance >= 52 && chance < 58){
         return random_parentheses(random_space() + random_expr_string()) + random_space() + " + " + random_space() + random_parentheses(random_expr_string());
     }
-    else if (chance >= 65 && chance < 72) {
+    else if (chance >= 58 && chance < 64) {
         return random_parentheses(random_space() + random_expr_string()) + random_space() + " * " + random_space() + random_parentheses(random_expr_string());
     }
-    else if (chance >= 72 && chance < 79) {
+    else if (chance >= 64 && chance < 70) {
+        return random_parentheses(random_parentheses(random_expr_string()) + "(" + random_space() + random_expr_string() + random_space() + ")");
+    }
+    else if (chance >= 70 && chance < 76) {
         return random_parentheses(random_bool());
     }
-    else if (chance >= 79 && chance < 86) {
+    else if (chance >= 76 && chance < 82) {
         return random_parentheses(random_let_string());
     }
-    else if (chance >= 86 && chance < 93) {
+    else if (chance >= 82 && chance < 88) {
         return random_parentheses(random_eq_string());
     }
-    else {
+    else if (chance >= 88 && chance < 94) {
         return random_parentheses(random_if_string());
+    }
+    else {
+        return random_parentheses(random_fun_string());
     }
 }
 
@@ -66,6 +72,12 @@ std::string random_eq_string() {
 //Create random if
 std::string random_if_string() {
     std::string str = "_if " + random_space() + random_expr_string() + random_space() + "_then " + random_space() + random_expr_string() + random_space() + " _else " + random_space() + random_expr_string();
+    return str;
+}
+
+//Create random function
+std::string random_fun_string() {
+    std::string str = "_fun " + random_space() + "(" + random_space() + random_char() + random_space() + ")" + random_space() + random_expr_string();
     return str;
 }
 

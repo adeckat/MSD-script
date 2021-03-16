@@ -63,8 +63,22 @@ Expr *parse_addend(std::istream &in) {
         return e;
 }
 
-//Parse a muticand
+//Parse a multicand
 Expr *parse_multicand(std::istream &in) {
+    Expr *e;
+    e = parse_inner(in);
+    skip_whitespace(in);
+    while (in.peek() == '(') {
+        consume(in, '(');
+        Expr *actual_arg = parse_expr(in);
+        consume(in, ')');
+        e = new CallExpr(e, actual_arg);
+    }
+    return e;
+}
+
+//Parse an inner
+Expr *parse_inner(std::istream &in) {
     skip_whitespace(in);
     int c = in.peek();
     if ((c == '-') || isdigit(c)) {
@@ -96,6 +110,9 @@ Expr *parse_multicand(std::istream &in) {
         }
         else if (kw == "if") {
             return parse_if(in);
+        }
+        else if (kw == "fun") {
+            return parse_fun(in);
         }
         else {
             throw std::runtime_error("E1 invalid input");
@@ -191,6 +208,22 @@ Expr *parse_if(std::istream &in) {
     return new IfExpr(test_part, then_part, else_part);
 }
 
+//Parse a _fun expr
+Expr *parse_fun(std::istream &in) {
+    Expr *lhs, *body;
+    std::string var;
+    skip_whitespace(in);
+    consume(in, '(');
+    skip_whitespace(in);
+    lhs = parse_var(in);
+    VarExpr *other_lhs = dynamic_cast<VarExpr*>(lhs);
+    var = other_lhs->getStr();
+    skip_whitespace(in);
+    consume(in, ')');
+    body = parse_expr(in);
+    return new FunExpr(var, body);
+}
+
 //Parse a _true epxr
 Expr *parse_true(std::istream &in) {
     return new BoolExpr(true);
@@ -213,6 +246,9 @@ std::string parse_keyword(std::istream &in) {
         return var;
     }
     else if (var == "if" || var == "then" || var == "else") {
+        return var;
+    }
+    else if (var == "fun") {
         return var;
     }
     else {

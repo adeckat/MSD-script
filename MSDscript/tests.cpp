@@ -67,6 +67,12 @@ TEST_CASE("equals") {
     CHECK((new IfExpr(new EqExpr(val1, var1), new NumExpr(1), new NumExpr(2)))->equals(new IfExpr(new EqExpr(new VarExpr("x"), new NumExpr(17)), new NumExpr(1), new NumExpr(2))) == false);
     CHECK((new IfExpr(var1, val1, val2))->equals(new LetExpr("x", new NumExpr(17), new NumExpr(24))) == false);
     
+    CHECK((new FunExpr("x", new AddExpr(var1, val1)))->equals(new FunExpr("x", new AddExpr(new VarExpr("x"), new NumExpr(17)))) == true);
+    CHECK((new FunExpr("y", new MultExpr(var2, val2)))->equals(new MultExpr(var2, new AddExpr(var2, val2))) == false);
+    
+    CHECK((new CallExpr(new FunExpr("x", new AddExpr(var1, val1)), val2))->equals(new CallExpr(new FunExpr("x", new AddExpr(new VarExpr("x"), new NumExpr(17))), new NumExpr(24))) == true);
+    CHECK((new CallExpr(new FunExpr("x", new AddExpr(var1, val1)), val2))->equals(new MultExpr(var2, new AddExpr(var2, val2))) == false);
+    
     CHECK((new NumVal(13))->equals(NULL) == false);
     CHECK((new NumVal(17))->equals(new NumVal(17)) == true);
     
@@ -74,8 +80,9 @@ TEST_CASE("equals") {
     CHECK((new BoolVal(true))->equals(new BoolVal(true)) == true);
     CHECK((new BoolVal(false))->equals(new BoolVal(false)) == true);
     CHECK((new BoolVal(true))->equals(new BoolVal(false)) == false);
-    CHECK((new BoolVal(true))->to_expr()->equals(new BoolExpr(true)));
-    CHECK((new BoolVal(false))->to_expr()->equals(new BoolExpr(false)));
+    
+    CHECK((new FunVal("x", new AddExpr(var1, val1)))->equals(NULL) == false);
+    CHECK((new FunVal("x", new AddExpr(var1, val1)))->equals(new FunVal("x", new AddExpr(new VarExpr("x"), new NumExpr(17)))) == true);
 }
 
 TEST_CASE("interp") {
@@ -115,11 +122,28 @@ TEST_CASE("interp") {
     CHECK((new LetExpr("x", val1, new LetExpr("x", val2, new AddExpr(var1, new NumExpr(2)))))
           ->interp()->equals(new NumVal(26)));
     CHECK((new LetExpr("x", new NumExpr(17), new AddExpr(new LetExpr("y", new NumExpr(24), new AddExpr(var2, new NumExpr(2))), var1)))->interp()->equals(new NumVal(43)));
-    CHECK((new LetExpr("x", new NumExpr(3), new IfExpr(new EqExpr(var1, new NumExpr(3)), new NumExpr(1), new NumExpr(0))))
-          ->interp()->equals(new NumVal(1)));
-    CHECK((new LetExpr("x",new AddExpr(new NumExpr(2), new NumExpr(3)),new MultExpr(new VarExpr("x"), new VarExpr("x"))))
-          ->interp()->equals(new NumVal(25))    );
-   
+    CHECK((new LetExpr("x", new NumExpr(3), new IfExpr(new EqExpr(var1, new NumExpr(3)), new NumExpr(1), new NumExpr(0))))->interp()->equals(new NumVal(1)));
+    CHECK((new LetExpr("x",new AddExpr(new NumExpr(2), new NumExpr(3)),new MultExpr(new VarExpr("x"), new VarExpr("x"))))->interp()->equals(new NumVal(25)));
+    CHECK((new LetExpr("f", new FunExpr("x", new AddExpr(var1, new NumExpr(1))), new CallExpr(new VarExpr("f"), new NumExpr(5))))->interp()->equals(new NumVal(6)));
+    CHECK((new LetExpr("f", new FunExpr("x", new NumExpr(7)), new CallExpr(new VarExpr("f"), new NumExpr(5))))->interp()->equals(new NumVal(7)));
+    CHECK((new LetExpr("f", new FunExpr("x", new BoolExpr(true)), new CallExpr(new VarExpr("f"), new NumExpr(5))))->interp()->equals(new BoolVal(true)));
+    CHECK_THROWS_WITH((new LetExpr("f", new FunExpr("x", new AddExpr(var1, new BoolExpr(true))), new CallExpr(new VarExpr("f"), new NumExpr(5))))->interp(), "Add of non-number error");
+    CHECK((new LetExpr("f", new FunExpr("x", new AddExpr(var1, new BoolExpr(true))), new AddExpr(new NumExpr(5), new NumExpr(1))))->interp()->equals(new NumVal(6)));
+    CHECK_THROWS_WITH((new LetExpr("f", new FunExpr("x", new NumExpr(7)), new CallExpr(new VarExpr("f"), new AddExpr(new NumExpr(5), new BoolExpr(true)))))->interp(), "Add of non-number error");
+    CHECK_THROWS_WITH((new LetExpr("f", new FunExpr("x", new AddExpr(var1, new NumExpr(1))), new AddExpr(new VarExpr("f"), new NumExpr(5))))->interp(), "Add of non-number error");
+    CHECK((new LetExpr("f", new FunExpr("x", new AddExpr(var1, new NumExpr(1))), new IfExpr(new BoolExpr(false), new CallExpr(new VarExpr("f"), new NumExpr(5)), new CallExpr(new VarExpr("f"), new NumExpr(6)))))
+          ->interp()->equals(new NumVal(7)));
+    CHECK((new LetExpr("f", new FunExpr("x", new AddExpr(var1, new NumExpr(1))), new LetExpr("g", new FunExpr("y", new AddExpr(var2, new NumExpr(2))), new IfExpr(new BoolExpr(true), new CallExpr(new VarExpr("f"), new NumExpr(5)), new CallExpr(new VarExpr("g"), new NumExpr(5))))))
+          ->interp()->equals(new NumVal(6)));
+    CHECK((new LetExpr("f", new FunExpr("x", new AddExpr(var1, new NumExpr(1))), new LetExpr("g", new FunExpr("y", new AddExpr(var2, new NumExpr(2))), new CallExpr(new VarExpr("f"), new CallExpr(new VarExpr("g"), new NumExpr(5))))))
+          ->interp()->equals(new NumVal(8)));
+    CHECK((new LetExpr("f", new FunExpr("x", new AddExpr(var1, new NumExpr(1))), new LetExpr("g", new FunExpr("y", new CallExpr(new VarExpr("f"), new AddExpr(var2, new NumExpr(2)))), new CallExpr(new VarExpr("g"), new NumExpr(5)))))
+          ->interp()->equals(new NumVal(8)));
+    CHECK((new LetExpr("f", new FunExpr("x", new AddExpr(var1, new NumExpr(1))), new LetExpr("g", new FunExpr("x", new AddExpr(new CallExpr(new VarExpr("f"), new NumExpr(2)), var1)), new CallExpr(new VarExpr("g"), new NumExpr(5)))))
+          ->interp()->equals(new NumVal(8)));
+    CHECK((new LetExpr("f", new FunExpr("x", new AddExpr(var1, new NumExpr(1))), new VarExpr("f")))
+          ->interp()->equals(new FunVal("x", new AddExpr(var1, new NumExpr(1)))));
+    
     CHECK((new AddExpr(new MultExpr(val1, new LetExpr("x", new NumExpr(1), var1)), val2))->interp()->equals(new NumVal(41)));
     CHECK_THROWS_WITH((new LetExpr("x", new AddExpr(var1, val1), new AddExpr(var1, val2)))->interp(), "Variable(s) exist(s) in this expression");
     
@@ -139,51 +163,11 @@ TEST_CASE("interp") {
     CHECK((new IfExpr(new EqExpr(val1, new NumExpr(17)), new AddExpr(val2, new NumExpr(24)), new NumExpr(5)))
           ->interp()->equals(new NumVal(48)));
     CHECK_THROWS_WITH((new IfExpr(new AddExpr(val1, val2), new NumExpr(1), new NumExpr(2)))->interp(), "Not a boolean value error");
-}
-
-TEST_CASE("has_variables") {
-    NumExpr* val1 = new NumExpr(17);
-    NumExpr* val2 = new NumExpr(24);
-    NumExpr* val3 = new NumExpr(17);
-    NumExpr* val4 = new NumExpr(24);
-    VarExpr* var1 = new VarExpr("x");
-    VarExpr* var2 = new VarExpr("y");
-    VarExpr* var3 = new VarExpr("X");
+    CHECK_THROWS_WITH((new IfExpr(new FunExpr("x", new AddExpr(var1, val1)), new NumExpr(1), new NumExpr(2)))->interp(), "Not a boolean value error");
     
-    CHECK(val3->has_variable() == false);
-    CHECK(val4->has_variable() == false);
-    
-    CHECK(var1->has_variable() == true);
-    CHECK(var3->has_variable() == true);
-    
-    CHECK((new AddExpr(var1, val1))->has_variable() == true);
-    CHECK((new AddExpr(val2, var2))->has_variable() == true);
-    CHECK((new AddExpr(var1, var2))->has_variable() == true);
-    CHECK((new AddExpr(val1, val2))->has_variable() == false);
-    CHECK((new AddExpr(var1, new AddExpr(val2, var2)))->has_variable() == true);
-    CHECK((new AddExpr(val1, new AddExpr(val2, val3)))->has_variable() == false);
-    
-    
-    CHECK((new MultExpr(var1, val1))->has_variable() == true);
-    CHECK((new MultExpr(val2, var2))->has_variable() == true);
-    CHECK((new MultExpr(var1, var2))->has_variable() == true);
-    CHECK((new MultExpr(val1, val2))->has_variable() == false);
-    CHECK((new MultExpr(new MultExpr(val2, var2), var1))->has_variable() == true);
-    CHECK((new MultExpr(new MultExpr(val2, val3), val1))->has_variable() == false);
-    
-    CHECK((new LetExpr("x", new AddExpr(val1, val2), new AddExpr(var1, val3)))
-          ->has_variable() == true);
-    CHECK((new LetExpr("x", val1, new AddExpr(val2, val3)))->has_variable() == false);
-    
-    CHECK((new BoolExpr(true))->has_variable() == false);
-    CHECK((new BoolExpr(false))->has_variable() == false);
-    
-    CHECK((new EqExpr(val1, val2))->has_variable() == false);
-    CHECK((new EqExpr(var1, val1))->has_variable() == true);
-    CHECK((new EqExpr(val2, var2))->has_variable() == true);
-    
-    CHECK((new IfExpr(new EqExpr(val1, new NumExpr(17)), new AddExpr(val2, new NumExpr(24)), new NumExpr(5)))->has_variable() == false);
-    CHECK((new IfExpr(new EqExpr(val1, new NumExpr(17)), new VarExpr("x"), new VarExpr("y")))->has_variable() == true);
+    CHECK((new FunExpr("x", new AddExpr(var1, val1)))->interp()->equals((new FunVal("x", new AddExpr(var1, val1)))));
+    CHECK((new CallExpr(new FunExpr("x", new AddExpr(var1, val1)), val2))->interp()->equals(new NumVal(41)));
+    CHECK((new CallExpr(new FunExpr("x", new AddExpr(var1, new NumExpr(1))), new NumExpr(5)))->interp()->equals(new NumVal(6)));
 }
 
 TEST_CASE("subst") {
@@ -254,6 +238,13 @@ TEST_CASE("subst") {
         ->equals(new LetExpr("z", new NumExpr(0), new AddExpr(new VarExpr("z"), new NumExpr(32)))));
     CHECK((new LetExpr("z", new AddExpr(new VarExpr("z"), new NumExpr(2)), new AddExpr(new VarExpr("z"), new NumExpr(32))))->subst("z", new NumExpr(0))
         ->equals(new LetExpr("z", new AddExpr(new NumExpr(0), new NumExpr(2)), new AddExpr(new VarExpr("z"), new NumExpr(32)))));
+//    CHECK((new LetExpr("factrl", new FunExpr("factrl", new FunExpr("x", new IfExpr(new EqExpr(new VarExpr("x"), new NumExpr(1)), new NumExpr(1), new MultExpr(new VarExpr("x"), new CallExpr(new VarExpr("factrl"), new CallExpr(new VarExpr("factrl"), new AddExpr(new VarExpr("x"), new NumExpr(1)))))))), new CallExpr(new VarExpr("factrl"), new CallExpr(new VarExpr("factrl"), new NumExpr(10)))))->interp()->equals(new NumVal(3628800)));
+//    _let factrl = _fun (factrl)
+//                    _fun (x)
+//                      _if x == 1
+//                      _then 1
+//                      _else x * factrl(factrl)(x + -1)
+//    _in  factrl(factrl)(10)
     
     CHECK((new BoolExpr(true))->subst("x", new VarExpr("y"))->equals(new BoolExpr(true)));
     CHECK((new BoolExpr(false))->subst("y", new NumExpr(24))->equals(new BoolExpr(false)));
@@ -263,16 +254,33 @@ TEST_CASE("subst") {
     CHECK((new EqExpr(new AddExpr(var1, new NumExpr(2)), new MultExpr(new NumExpr(2), var1)))->subst("x", new NumExpr(2))
           ->equals(new EqExpr(new AddExpr(new NumExpr(2), new NumExpr(2)), new MultExpr(new NumExpr(2), new NumExpr(2)))));
     
+    CHECK((new FunExpr("x", new AddExpr(var1, val1)))->subst("x", new NumExpr(24))->equals((new FunExpr("x", new AddExpr(var1, val1)))));
+    CHECK((new FunExpr("x", new AddExpr(var1, new MultExpr(var2, val1))))->subst("y", val2)->equals(new FunExpr("x", new AddExpr(new VarExpr("x"), new MultExpr(new NumExpr(24), new NumExpr(17))))));
+    
+    CHECK((new CallExpr(new FunExpr("x", new AddExpr(var1, val1)), val2))->subst("x", new NumExpr(1))->equals((new CallExpr(new FunExpr("x", new AddExpr(new VarExpr("x"), new NumExpr(17))), new NumExpr(24)))));
+    CHECK((new CallExpr(new FunExpr("x", new AddExpr(var1, new MultExpr(var2, val1))), new AddExpr(var2, val2)))->subst("y", new NumExpr(17))->equals((new CallExpr(new FunExpr("x", new AddExpr(new VarExpr("x"), new MultExpr(new NumExpr(17), new NumExpr(17)))), new AddExpr(new NumExpr(17), new NumExpr(24))))));
 }
 
 TEST_CASE("add_to") {
     CHECK_THROWS_WITH((new AddExpr(new NumExpr(17),new NumExpr(24)))->interp()->add_to(NULL), "Add of non-number error");
     CHECK_THROWS_WITH((new BoolVal(true))->add_to(new NumVal(17)), "Add of non-number error");
+    CHECK_THROWS_WITH((new FunVal("x", new AddExpr(new VarExpr("x"), new NumExpr(17))))->add_to(new NumVal(17)), "Add of non-number error");
 }
 
 TEST_CASE("mult_by") {
     CHECK_THROWS_WITH( (new AddExpr(new NumExpr(24),new NumExpr(17)))->interp()->mult_by(NULL), "Mult of non-number error");
     CHECK_THROWS_WITH((new BoolVal(true))->mult_by(new NumVal(17)), "Mult of non-number error");
+    CHECK_THROWS_WITH((new FunVal("x", new AddExpr(new VarExpr("x"), new NumExpr(17))))->mult_by(new NumVal(17)), "Mult of non-number error");
+}
+
+TEST_CASE("other test cases for Val class") {
+    CHECK((new BoolVal(true))->to_expr()->equals(new BoolExpr(true)));
+    CHECK((new BoolVal(false))->to_expr()->equals(new BoolExpr(false)));
+    CHECK((new FunVal("x", new AddExpr(new VarExpr("x"), new NumExpr(17))))->to_expr()->equals(new FunExpr("x", new AddExpr(new VarExpr("x"), new NumExpr(17)))));
+    CHECK_THROWS_WITH((new NumVal(17))->call(new NumVal(24)), "Not a function to be called error");
+    CHECK_THROWS_WITH((new BoolVal(true))->call(new NumVal(24)), "Not a function to be called error");
+    CHECK((new FunVal("x", new AddExpr(new VarExpr("x"), new NumExpr(17))))->call(new NumVal(24))->equals(new NumVal(41)));
+    CHECK((new FunVal("x", new MultExpr(new VarExpr("x"), new NumExpr(17))))->call(new NumVal(24))->equals(new NumVal(408)));
 }
 
 TEST_CASE("print") {
@@ -377,6 +385,12 @@ TEST_CASE("print") {
     
     toString = "(_if (x==17) _then 1 _else 0)";
     CHECK((new IfExpr(new EqExpr(var1, val1), new NumExpr(1), new NumExpr(0)))->to_str() == toString);
+    
+    toString = "(_fun (x) (x+17))";
+    CHECK((new FunExpr("x", new AddExpr(var1, val1)))->to_str() == toString);
+    
+    toString = "(_fun (x) (x+17))(24)";
+    CHECK((new CallExpr(new FunExpr("x", new AddExpr(var1, val1)), val2))->to_str() == toString);
 }
 
 TEST_CASE("pretty_print") {
@@ -470,7 +484,7 @@ TEST_CASE("pretty_print") {
     CHECK((new MultExpr(new MultExpr(val1, var1), new AddExpr(val2, var2)))->to_pretty_str() == toPrettyStr);
     
     toPrettyStr = "3 * 1 * 7 * _let x = 3\n            _in  _let x = 5\n                 _in  x + _let x = 5\n                          _in  x * 1";
-    CHECK((new MultExpr(new NumExpr(3), new MultExpr(new NumExpr(1), new MultExpr(new NumExpr(7), new LetExpr("x", new NumExpr(3), new LetExpr("x", new NumExpr(5), new AddExpr(new VarExpr("x"), new LetExpr("x", new NumExpr(5), new MultExpr(new VarExpr("x"), new NumExpr(1))))))))))->to_pretty_str() == toPrettyStr); 
+    CHECK((new MultExpr(new NumExpr(3), new MultExpr(new NumExpr(1), new MultExpr(new NumExpr(7), new LetExpr("x", new NumExpr(3), new LetExpr("x", new NumExpr(5), new AddExpr(new VarExpr("x"), new LetExpr("x", new NumExpr(5), new MultExpr(new VarExpr("x"), new NumExpr(1))))))))))->to_pretty_str() == toPrettyStr);
     
     //_let tests
     toPrettyStr = "_let x = 5\n_in  (_let y = 3\n      _in  y + 2) + x";
@@ -521,6 +535,7 @@ TEST_CASE("pretty_print") {
     toPrettyStr = "(_let x = 17\n _in  x) == 24";
     CHECK((new EqExpr(new LetExpr("x", val1, var1), val2))->to_pretty_str() == toPrettyStr);
 
+    //_if tests
     toPrettyStr = "_if x == 17\n_then 1\n_else 0";
     CHECK((new IfExpr(new EqExpr(var1, val1), new NumExpr(1), new NumExpr(0)))->to_pretty_str() == toPrettyStr);
     
@@ -539,14 +554,38 @@ TEST_CASE("pretty_print") {
     toPrettyStr = "(_let x = 1 == 2\n _in  _let same = x\n      _in  _if 3 == 4\n           _then _false\n           _else _true) + 17";
     CHECK((new AddExpr(new LetExpr("x", new EqExpr(new NumExpr(1), new NumExpr(2)), new LetExpr("same", new VarExpr("x"), new IfExpr(new EqExpr(new NumExpr(3), new NumExpr(4)), new BoolExpr(false), new BoolExpr(true)))), val1))->to_pretty_str() == toPrettyStr);
     
-//    _if x
-//    _then _true
-//    _else _let Y = _let F = 17
-//                   _in  S * 24 == 17
-//          _in  _true
-//    CHECK((new IfExpr(new VarExpr("x"), new BoolExpr(true), new LetExpr("Y", new LetExpr("F", new NumExpr(17), new EqExpr(new MultExpr(new VarExpr("S"), new NumExpr(24)), new NumExpr(17))), new BoolExpr(true))))->to_pretty_str() == "");
-//
-//    CHECK((new IfExpr(new VarExpr("x"), new IfExpr(new VarExpr("x"), new VarExpr("y"), new MultExpr(new NumExpr(17), new NumExpr(24))), new EqExpr(new IfExpr(new EqExpr(new BoolExpr(true), new NumExpr(17)), new IfExpr(new VarExpr("x"), new LetExpr("c", new NumExpr(17), new MultExpr(new NumExpr(17), new NumExpr(24))), new IfExpr(new NumExpr(17), new MultExpr(new VarExpr("G"), new NumExpr(24)), new BoolExpr(true))), new AddExpr(new BoolExpr(true), new NumExpr(24))), new VarExpr("y"))))->to_pretty_str() == "");
+    //_fun and call tests
+    toPrettyStr = "_fun (x)\n  x + 1";
+    CHECK((new FunExpr("x", new AddExpr(var1, new NumExpr(1))))->to_pretty_str() == toPrettyStr);
+    
+    toPrettyStr = "_fun (x)\n  _true";
+    CHECK((new FunExpr("x", new BoolExpr(true)))->to_pretty_str() == toPrettyStr);
+    
+    toPrettyStr = "_fun (x)\n  x + _true";
+    CHECK((new FunExpr("x",new AddExpr(var1, new BoolExpr(true))))->to_pretty_str() == toPrettyStr);
+    
+    toPrettyStr = "(_fun (x)\n   x + 17) * 24";
+    CHECK((new MultExpr(new FunExpr("x", new AddExpr(var1, val1)), val2))->to_pretty_str() == toPrettyStr);
+    
+    toPrettyStr = "_let f = _fun (x)\n           x + 1\n_in  f(5)";
+    CHECK((new LetExpr("f", new FunExpr("x", new AddExpr(var1, new NumExpr(1))), new CallExpr(new VarExpr("f"), new NumExpr(5))))->to_pretty_str() == toPrettyStr);
+    
+    toPrettyStr = "_let f = _fun (x)\n           x + 1\n_in  _if _false\n     _then f(5)\n     _else f(6)";
+    CHECK((new LetExpr("f", new FunExpr("x", new AddExpr(var1, new NumExpr(1))), new IfExpr(new BoolExpr(false), new CallExpr(new VarExpr("f"), new NumExpr(5)), new CallExpr(new VarExpr("f"), new NumExpr(6)))))->to_pretty_str() == toPrettyStr);
+    
+    toPrettyStr = "_let f = _fun (x)\n           x + 1\n_in  _let g = _fun (y)\n                y + 2\n     _in  _if _true\n          _then f(5)\n          _else g(5)";
+    CHECK((new LetExpr("f", new FunExpr("x", new AddExpr(var1, new NumExpr(1))), new LetExpr("g", new FunExpr("y", new AddExpr(var2, new NumExpr(2))), new IfExpr(new BoolExpr(true), new CallExpr(new VarExpr("f"), new NumExpr(5)), new CallExpr(new VarExpr("g"), new NumExpr(5))))))
+          ->to_pretty_str() == toPrettyStr);
+    
+    toPrettyStr = "_let f = _fun (x)\n           x + 1\n_in  _let g = _fun (y)\n                y + 2\n     _in  f(g(5))";
+    CHECK((new LetExpr("f", new FunExpr("x", new AddExpr(var1, new NumExpr(1))), new LetExpr("g", new FunExpr("y", new AddExpr(var2, new NumExpr(2))), new CallExpr(new VarExpr("f"), new CallExpr(new VarExpr("g"), new NumExpr(5))))))->to_pretty_str() == toPrettyStr);
+    
+    toPrettyStr = "_let f = _fun (x)\n           x + 1\n_in  _let g = _fun (y)\n                f(y + 2)\n     _in  g(5)";
+    CHECK((new LetExpr("f", new FunExpr("x", new AddExpr(var1, new NumExpr(1))), new LetExpr("g", new FunExpr("y", new CallExpr(new VarExpr("f"), new AddExpr(var2, new NumExpr(2)))), new CallExpr(new VarExpr("g"), new NumExpr(5)))))->to_pretty_str() == toPrettyStr);
+    
+    toPrettyStr = "_let f = _fun (x)\n           x + 1\n_in  _let g = _fun (x)\n                f(2) + x\n     _in  g(5)";
+    CHECK((new LetExpr("f", new FunExpr("x", new AddExpr(var1, new NumExpr(1))), new LetExpr("g", new FunExpr("x", new AddExpr(new CallExpr(new VarExpr("f"), new NumExpr(2)), var1)), new CallExpr(new VarExpr("g"), new NumExpr(5)))))->to_pretty_str() == toPrettyStr);
+    
 }
 
 TEST_CASE("parse") {
@@ -589,7 +628,10 @@ TEST_CASE("parse") {
     CHECK(parse_str("_if _false _then 1 _else 0")->interp()->equals(new NumVal(0)));
     CHECK_THROWS_WITH(parse_str("_if _tru _then 1 _else 0")->interp(), "Invalid keyword");
     CHECK_THROWS_WITH(parse_str("_if _fals _then 1 _else 0")->interp(),"Invalid keyword");
+
+    CHECK(parse_str("_let f = (_fun (x) (x+1)) _in (f)(5)")->interp()->equals(new NumVal(6)));
     
+//    CHECK_THROWS_WITH(parse_str("_let factrl = (_fun (factrl) (_fun (x) _if x == 1 _then 1 _else (x * factrl(factrl)(x + -1)))) _in  factrl(factrl)(10)")->interp(), "Invalid keyword");
     
     //print tests
     std::string toString;
@@ -660,6 +702,24 @@ TEST_CASE("parse") {
     toString = "(_if (x==17) _then 1 _else 0)";
     CHECK(parse_str("_if     x    ==17 _then   1 _else 0")->to_str() == toString);
    
+    toString = "(_fun (x) (x+17))";
+    CHECK(parse_str("_fun    (  x  )   x    + 17")->to_str() == toString);
+    
+    toString = "((_fun (x) (x+17))*24)";
+    CHECK(parse_str("((_fun (x)   x + 17) * 24)")->to_str() == toString);
+    
+    toString = "(_let f=(_fun (x) (x+1)) _in f(5))";
+    CHECK(parse_str("_let f    = _fun (x) (x + 1) _in  f(5)")->to_str() == toString);
+   
+    toString = "(_let f=(_fun (x) (x+1)) _in (_if _false _then f(5) _else f(6)))";
+    CHECK(parse_str("_let f = _fun (x)\n           x + 1\n_in  _if _false\n     _then f(5)\n     _else f(6)")->to_str() == toString);
+
+    toString = "(_let f=(_fun (x) (x+1)) _in (_let g=(_fun (y) (y+2)) _in (_if _true _then f(5) _else g(5))))";
+    CHECK(parse_str("_let f = _fun (x)\n           x + 1\n_in  _let g = _fun (y)\n                y + 2\n     _in  _if _true\n          _then f(5)\n          _else g(5)")->to_str() == toString);
+
+    toString = "(_let f=(_fun (x) (x+1)) _in (_let g=(_fun (y) (y+2)) _in f(g(5))))";
+    CHECK(parse_str("_let f = _fun (x)\n           x + 1\n_in  _let g = _fun (y)\n                y + 2\n     _in  f(g(5))")->to_str() == toString);
+    
     //pretty_print tests
     std::string toPrettyStr;
     toPrettyStr = "(17 + x) + 24";
@@ -738,6 +798,24 @@ TEST_CASE("parse") {
     
     toPrettyStr = "_let same = 1 == 2\n_in  _if 1 == 2\n     _then _false + 5\n     _else 88";
     CHECK(parse_str("(_let same = (1==2)   _in _if (1==2) _then (_false + 5) _else (88))")->to_pretty_str() == toPrettyStr);
+    
+    toPrettyStr = "_fun (x)\n  x + 17";
+    CHECK(parse_str("(_fun (x) (x+17))")->to_pretty_str() == toPrettyStr);
+    
+    toPrettyStr = "(_fun (x)\n   x + 17) * 24";
+    CHECK(parse_str("((_fun (x) (x+17))*24)")->to_pretty_str() == toPrettyStr);
+    
+    toPrettyStr = "_let f = _fun (x)\n           x + 1\n_in  f(5)";
+    CHECK(parse_str("(_let f=(_fun (x) (x+1)) _in f(5))")->to_pretty_str() == toPrettyStr);
+
+    toPrettyStr = "_let f = _fun (x)\n           x + 1\n_in  _if _false\n     _then f(5)\n     _else f(6)";
+    CHECK(parse_str("(_let f=(_fun (x) (x+1)) _in (_if _false _then f(5) _else f(6)))")->to_pretty_str() == toPrettyStr);
+
+    toPrettyStr = "_let f = _fun (x)\n           x + 1\n_in  _let g = _fun (y)\n                y + 2\n     _in  _if _true\n          _then f(5)\n          _else g(5)";
+    CHECK(parse_str("(_let f=(_fun (x) (x+1)) _in (_let g=(_fun (y) (y+2)) _in (_if _true _then f(5) _else g(5))))")->to_pretty_str() == toPrettyStr);
+
+    toPrettyStr = "_let f = _fun (x)\n           x + 1\n_in  _let g = _fun (y)\n                y + 2\n     _in  f(g(5))";
+    CHECK(parse_str("(_let f=(_fun (x) (x+1)) _in (_let g=(_fun (y) (y+2)) _in f(g(5))))")->to_pretty_str() == toPrettyStr);
     
 //    CHECK(parse_str("_if     1311433591   _then  _if     X  _then       F  _else        -1625335828   *   _false _else    (_if     _true   ==    32309537_then _if     L  _then     _let   c =  1362618119 _in    (-977663374)   *   eQHMjGAEBk _else       -7896479  == (_if     -1725426414   _then     G   *         174797107    _else     _true)     _else    _true    +    -1128812070)   ==     MABowbMNz")->to_pretty_str() == " ");
 }

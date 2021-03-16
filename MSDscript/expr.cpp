@@ -48,10 +48,6 @@ bool NumExpr::equals(Expr *other) {
 Val *NumExpr::interp() {
     return new NumVal(this->numExpr);
 }
-//Return false because a Num expression does not contain (a) variable(s)
-bool NumExpr::has_variable() {
-    return false;
-}
 //Return this because a Num expression does not contain (a) variable(s) to be subst
 Expr *NumExpr::subst(std::string s, Expr *other) {
     return this;
@@ -89,10 +85,6 @@ std::string VarExpr::getStr() {
 //Interp a Var expression and throw error because variable could not be interp
 Val *VarExpr::interp() {
     throw std::runtime_error("Variable(s) exist(s) in this expression");
-}
-//Return true because a Var expression always contains (a) variable(s)
-bool VarExpr::has_variable() {
-    return true;
 }
 //Check if a Var expression contains a specific variable then substitute with a given expression
 Expr *VarExpr::subst(std::string s, Expr *other) {
@@ -133,10 +125,6 @@ bool AddExpr::equals(Expr *other) {
 //Interp and return value of an Add expression
 Val *AddExpr::interp() {
     return (this->lhs->interp()->add_to(this->rhs->interp()));
-}
-//Return true if either lhs or rhs of an Add expression contains (a) variable(s); otherwise return false
-bool AddExpr::has_variable() {
-    return (this->lhs->has_variable() || this->rhs->has_variable());
 }
 //Check if either lhs or rhs of an Add expression contains a specific variable then substitute with a given expression
 Expr *AddExpr::subst(std::string s, Expr *other) {
@@ -185,10 +173,6 @@ bool MultExpr::equals(Expr *other) {
 //Interp and return value of a Mult expression
 Val *MultExpr::interp() {
     return (this->lhs->interp()->mult_by(this->rhs->interp()));
-}
-//Return true if either lhs or rhs of a Mult expression contains (a) variable(s); otherwise return false
-bool MultExpr::has_variable() {
-    return (this->lhs->has_variable() || this->rhs->has_variable());
 }
 //Check if either lhs or rhs of a Mult expression contains a specific variable then substitute with a given expression
 Expr *MultExpr::subst(std::string s, Expr *other) {
@@ -239,10 +223,6 @@ bool LetExpr::equals(Expr *other) {
 Val *LetExpr::interp() {
     Val* new_rhs = this->rhs->interp();
     return this->body->subst(var, new_rhs->to_expr())->interp();
-}
-//Return true if either rhs or body of a _let expression contains (a) variable(s); otherwise return false
-bool LetExpr::has_variable() {
-    return (this->rhs->has_variable() || this->body->has_variable());
 }
 //Check if a _let expression contains a specific variable then substitute rhs and body with a given expression
 Expr *LetExpr::subst(std::string s, Expr *other) {
@@ -297,10 +277,6 @@ bool BoolExpr::equals(Expr *e) {
 Val *BoolExpr::interp() {
     return new BoolVal(this->boolExpr);
 }
-//Return false because a Bool expression does not contain (a) variable(s)
-bool BoolExpr::has_variable() {
-    return false;
-}
 //Return this because a Bool expression does not contain (a) variable(s) to be subst
 Expr *BoolExpr::subst(std::string var, Expr *e) {
     return new BoolExpr(this->boolExpr);
@@ -339,10 +315,6 @@ bool EqExpr::equals(Expr *other) {
 //Interp and return value of an Eq expression
 Val *EqExpr::interp() {
     return new BoolVal((this->lhs->interp()->equals(this->rhs->interp())));
-}
-//Return true if either lhs or rhs of an Eq expression contains (a) variable(s); otherwise return false
-bool EqExpr::has_variable() {
-    return (this->lhs->has_variable() || this->rhs->has_variable());
 }
 //Check if either lhs or rhs of an Eq expression contains a specific variable then substitute with a given expression
 Expr *EqExpr::subst(std::string s, Expr *other) {
@@ -400,11 +372,6 @@ Val *IfExpr::interp() {
         return this->else_part->interp();
     }
 }
-//Return true if either test_part or then_part or else_part of an _if expression contains (a) variable(s); otherwise return false
-bool IfExpr::has_variable() {
-    return (this->test_part->has_variable() || this->then_part->has_variable() ||
-            this->else_part->has_variable());
-}
 //Check if an _if expression contains a specific variable then substitute with a given expression
 Expr * IfExpr::subst(std::string var, Expr *e) {
     Expr *other_test = this->test_part->subst(var, e);
@@ -442,4 +409,103 @@ void IfExpr::pretty_print_at(print_mode_t mode, std::ostream& out, int indentati
     if (mode > print_group_none && inside >= 1) {
         out << ")";
     }
+}
+
+/* _fun and its implementation */
+//_fun expression constructor
+FunExpr::FunExpr(std::string formal_arg, Expr *body) {
+    this->formal_arg = formal_arg;
+    this->body = body;
+}
+//Compare a _fun expression with another expression to see if they are equal
+bool FunExpr::equals(Expr *other) {
+    FunExpr *other_fun = dynamic_cast<FunExpr*>(other);
+    if (other_fun == NULL) {
+        return false;
+    }
+    else {
+        return (this->formal_arg == other_fun->formal_arg) && (this->body->equals(other_fun->body));
+    }
+}
+//Interp and return value of a _fun expression
+Val *FunExpr::interp() {
+    return new FunVal(formal_arg, body);
+}
+//Check if a _fun expression contains a specific variable then substitute rhs and body with a given expression
+Expr *FunExpr::subst(std::string s, Expr *other) {
+    if (this->formal_arg == s) {
+        return new FunExpr(this->formal_arg, this->body);
+    }
+    Expr* other_body = this->body->subst(s, other);
+    return new FunExpr(this->formal_arg, other_body);
+}
+//Print out a _fun expression
+void FunExpr::print(std::ostream& out) {
+    out << "(_fun (" << this->formal_arg << ") ";
+    this->body->print(out);
+    out << ")";
+}
+//Helper function to print out a _fun expression in a pretty way
+void FunExpr::pretty_print_at(print_mode_t mode, std::ostream& out, int indentation, int inside) {
+    if (mode > print_group_none && inside >= 1) {
+        out << "(";
+    }
+    int pos1 = (int) out.tellp();
+    out << "_fun (" << this->formal_arg << ")";
+    out << "\n";
+    int pos2 = (int) out.tellp();
+    int n = pos1 - indentation;
+    out << std::string(n, ' ') << "  ";
+    this->body->pretty_print_at(print_group_none, out, pos2, inside);
+    if (mode > print_group_none && inside >= 1) {
+        out << ")";
+    }
+}
+
+/* Call and its implementation */
+//Call expression constructor
+CallExpr::CallExpr(Expr *to_be_called, Expr *actual_arg) {
+    this->to_be_called = to_be_called;
+    this->actual_arg = actual_arg;
+}
+//Compare a Call expression with another expression to see if they are equal
+bool CallExpr::equals (Expr *other) {
+    CallExpr *other_call = dynamic_cast<CallExpr*>(other);
+    if (other_call == NULL) {
+        return  false;
+    }
+    else {
+        return (this->to_be_called->equals(other_call->to_be_called)) && (this->actual_arg->equals(other_call->actual_arg));
+    }
+}
+//Interp and return value of a Call expression
+Val *CallExpr::interp() {
+    return to_be_called->interp()->call(actual_arg->interp());
+}
+//Check if either lhs or rhs of a Call expression contains a specific variable then substitute with a given expression
+Expr *CallExpr::subst(std::string s, Expr *other) {
+    Expr *other_to_be_called = this->to_be_called->subst(s, other);
+    Expr *other_actual_arg = this->actual_arg->subst(s, other);
+    return new CallExpr(other_to_be_called, other_actual_arg);
+}
+//Print out a Call expression
+void CallExpr::print(std::ostream& out) {
+    this->to_be_called->print(out);
+    out << "(";
+    this->actual_arg->print(out);
+    out << ")";
+}
+//Helper function to print out a Call expression in a pretty way
+void CallExpr::pretty_print_at(print_mode_t mode, std::ostream& out, int indentation, int inside) {
+    inside += 1;
+//    if (mode >= print_group_add_or_mult) {
+//        out << "(";
+//    }
+    this->to_be_called->pretty_print_at(print_group_add_or_mult, out, indentation, inside);
+    out << "(";
+    this->actual_arg->pretty_print_at(print_group_none, out, indentation, inside);
+    out << ")";
+//    if (mode >= print_group_add_or_mult) {
+//        out << ")";
+//    }
 }

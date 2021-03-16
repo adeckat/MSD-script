@@ -18,6 +18,7 @@ std::string random_var_string();
 std::string random_let_string();
 std::string random_eq_string();
 std::string random_if_string();
+std::string random_fun_string();
 std::string random_char();
 std::string random_space();
 std::string random_sign();
