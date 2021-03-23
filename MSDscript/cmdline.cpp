@@ -9,6 +9,7 @@
 #include "cmdline.h"
 #include "parse.h"
 #include "val.h"
+#include "pointer.h"
 
 
 void use_arguments(int argc, char * argv[]) {
@@ -45,21 +46,21 @@ void use_arguments(int argc, char * argv[]) {
             }
             //Run interp
             if (argv[i] == (std::string)"--interp") {
-                Expr* n = parse_expr(std::cin);
+                PTR(Expr) n = parse_expr(std::cin);
                 std::cout << n->interp()->to_expr()->to_str();
                 std::cout << "\n";
                 exit(0);
             }
             //Run print
             if (argv[i] == (std::string)"--print") {
-                Expr* n = parse_expr(std::cin);
+                PTR(Expr) n = parse_expr(std::cin);
                 n->print(std::cout);
                 std::cout << "\n";
                 exit(0);
             }
             //Run pretty print
             if (argv[i] == (std::string)"--pretty-print") {
-                Expr* n = parse_expr(std::cin);
+                PTR(Expr) n = parse_expr(std::cin);
                 std::cout << n->to_pretty_str();
                 std::cout << "\n";
                 exit(0);

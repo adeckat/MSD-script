@@ -12,55 +12,57 @@
 #include <string>
 #include <iostream>
 #include <sstream>
+#include "pointer.h"
 
 class Expr;
-class Val {
+
+CLASS(Val) {
 public:
     //Return true if two expressions are the same, and false otherwise
-    virtual bool equals(Val *e) = 0;
+    virtual bool equals(PTR(Val) e) = 0;
     //Helper function to add and Mult
-    virtual Val* add_to(Val *other_val) = 0;
-    virtual Val* mult_by(Val *other_val) = 0;
-    virtual Expr* to_expr() = 0;
+    virtual PTR(Val) add_to(PTR(Val) other_val) = 0;
+    virtual PTR(Val) mult_by(PTR(Val) other_val) = 0;
+    virtual PTR(Expr) to_expr() = 0;
     virtual bool is_true() = 0;
-    virtual Val* call(Val *actual_arg) = 0;
+    virtual PTR(Val) call(PTR(Val) actual_arg) = 0;
 };
 
 class NumVal : public Val {
 public:
     int numVal;
     NumVal(int numVal);
-    virtual bool equals(Val *other);
-    virtual Val* add_to(Val *other_val);
-    virtual Val* mult_by(Val *other_val);
-    virtual Expr* to_expr();
+    virtual bool equals(PTR(Val) other);
+    virtual PTR(Val) add_to(PTR(Val) other_val);
+    virtual PTR(Val) mult_by(PTR(Val) other_val);
+    virtual PTR(Expr) to_expr();
     virtual bool is_true();
-    virtual Val* call(Val *actual_arg);
+    virtual PTR(Val) call(PTR(Val) actual_arg);
 };
 
 class BoolVal : public Val {
 public:
     bool boolVal;
     BoolVal(bool boolVal);
-    virtual bool equals(Val *other);
-    virtual Val* add_to(Val *other_val);
-    virtual Val* mult_by(Val *other_val);
-    virtual Expr* to_expr();
+    virtual bool equals(PTR(Val) other);
+    virtual PTR(Val) add_to(PTR(Val) other_val);
+    virtual PTR(Val) mult_by(PTR(Val) other_val);
+    virtual PTR(Expr) to_expr();
     virtual bool is_true();
-    virtual Val* call(Val *actual_arg);
+    virtual PTR(Val) call(PTR(Val) actual_arg);
 };
 
 class FunVal : public Val {
 public:
     std::string formal_arg;
-    Expr *body;
-    FunVal(std::string formal_arg, Expr *body);
-    virtual bool equals(Val *other);
-    virtual Val* add_to(Val *other_val);
-    virtual Val* mult_by(Val *other_val);
-    virtual Expr* to_expr();
+    PTR(Expr) body;
+    FunVal(std::string formal_arg, PTR(Expr) body);
+    virtual bool equals(PTR(Val) other);
+    virtual PTR(Val) add_to(PTR(Val) other_val);
+    virtual PTR(Val) mult_by(PTR(Val) other_val);
+    virtual PTR(Expr) to_expr();
     virtual bool is_true();
-    virtual Val* call(Val *actual_arg);
+    virtual PTR(Val) call(PTR(Val) actual_arg);
 };
 
 #endif /* val_hpp */

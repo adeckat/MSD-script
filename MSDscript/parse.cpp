@@ -9,14 +9,14 @@
 #include <cassert>
 
 //Input string to parse
-Expr *parse_str(std::string s){
+PTR(Expr) parse_str(std::string s){
     std::istringstream str(s);
     return parse_expr(str);
 }
 
 //Parse an expr
-Expr *parse_expr(std::istream &in) {
-    Expr *e;
+PTR(Expr) parse_expr(std::istream &in) {
+    PTR(Expr) e;
     e = parse_comparg(in);
     skip_whitespace(in);
     int c = in.peek();
@@ -25,8 +25,8 @@ Expr *parse_expr(std::istream &in) {
         c = in.peek();
         if (c == '=') {
             consume(in, '=');
-            Expr *rhs = parse_expr(in);
-            return new EqExpr(e, rhs);
+            PTR(Expr) rhs = parse_expr(in);
+            return NEW(EqExpr)(e, rhs);
         }
         else {
             throw std::runtime_error("Missing the second equal sign");
@@ -36,49 +36,49 @@ Expr *parse_expr(std::istream &in) {
 }
 
 //Parse a comparg
-Expr *parse_comparg(std::istream &in) {
-    Expr *e;
+PTR(Expr) parse_comparg(std::istream &in) {
+    PTR(Expr) e;
     e = parse_addend(in);
     skip_whitespace(in);
     int c = in.peek();
     if (c == '+') {
         consume(in, '+');
-        Expr *rhs = parse_comparg(in);
-        return new AddExpr(e, rhs);
+        PTR(Expr) rhs = parse_comparg(in);
+        return NEW(AddExpr)(e, rhs);
     } else
         return e;
 }
 
 //Parse an addend
-Expr *parse_addend(std::istream &in) {
-    Expr *e;
+PTR(Expr) parse_addend(std::istream &in) {
+    PTR(Expr) e;
     e = parse_multicand(in);
     skip_whitespace(in);
     int c = in.peek();
     if (c == '*') {
         consume(in, '*');
-        Expr *rhs = parse_addend(in);
-        return new MultExpr(e, rhs);
+        PTR(Expr) rhs = parse_addend(in);
+        return NEW(MultExpr)(e, rhs);
     } else
         return e;
 }
 
 //Parse a multicand
-Expr *parse_multicand(std::istream &in) {
-    Expr *e;
+PTR(Expr) parse_multicand(std::istream &in) {
+    PTR(Expr) e;
     e = parse_inner(in);
     skip_whitespace(in);
     while (in.peek() == '(') {
         consume(in, '(');
-        Expr *actual_arg = parse_expr(in);
+        PTR(Expr) actual_arg = parse_expr(in);
         consume(in, ')');
-        e = new CallExpr(e, actual_arg);
+        e = NEW(CallExpr)(e, actual_arg);
     }
     return e;
 }
 
 //Parse an inner
-Expr *parse_inner(std::istream &in) {
+PTR(Expr) parse_inner(std::istream &in) {
     skip_whitespace(in);
     int c = in.peek();
     if ((c == '-') || isdigit(c)) {
@@ -86,7 +86,7 @@ Expr *parse_inner(std::istream &in) {
     }
     else if (c == '(') {
         consume(in, '(');
-        Expr *e = parse_expr(in);
+        PTR(Expr) e = parse_expr(in);
         skip_whitespace(in);
         c = in.get();
         if (c != ')')
@@ -125,7 +125,7 @@ Expr *parse_inner(std::istream &in) {
 }
 
 //Parse a num expr
-Expr *parse_num(std::istream &in) {
+PTR(Expr) parse_num(std::istream &in) {
     int n = 0;
     bool negative = false;
     if (in.peek() == '-') {
@@ -148,11 +148,11 @@ Expr *parse_num(std::istream &in) {
     if (negative) {
         n = -n;
     }
-    return new NumExpr(n);
+    return NEW(NumExpr)(n);
 }
 
 //Parse a var epxr
-Expr *parse_var(std::istream &in) {
+PTR(Expr) parse_var(std::istream &in) {
     int c;
     std::string str;
     while (1) {
@@ -165,16 +165,18 @@ Expr *parse_var(std::istream &in) {
             break;
         }
     }
-    return new VarExpr(str);
+    return NEW(VarExpr)(str);
 }
 
 //Parse a _let expr
-Expr *parse_let(std::istream &in) {
-    Expr *lhs, *rhs, *body;
+PTR(Expr) parse_let(std::istream &in) {
+    PTR(Expr) lhs;
+    PTR(Expr) rhs;
+    PTR(Expr) body;
     std::string kw, var;
     skip_whitespace(in);
     lhs = parse_var(in);
-    VarExpr *other_lhs = dynamic_cast<VarExpr*>(lhs);
+    PTR(VarExpr) other_lhs = CAST(VarExpr)(lhs);
     var = other_lhs->getStr();
     skip_whitespace(in);
     consume(in, '=');
@@ -185,12 +187,14 @@ Expr *parse_let(std::istream &in) {
     if (kw != "in")
         throw std::runtime_error("E4 invalid input");
     body = parse_expr(in);
-    return new LetExpr(var, rhs, body); 
+    return NEW(LetExpr)(var, rhs, body);
 }
 
 //Parse an _if expr
-Expr *parse_if(std::istream &in) {
-    Expr *test_part, *then_part, *else_part;
+PTR(Expr) parse_if(std::istream &in) {
+    PTR(Expr) test_part;
+    PTR(Expr) then_part;
+    PTR(Expr) else_part;
     std::string kw;
     test_part = parse_expr(in);
     skip_whitespace(in);
@@ -205,39 +209,40 @@ Expr *parse_if(std::istream &in) {
     if (kw != "else")
         throw std::runtime_error("E7 invalid input");
     else_part = parse_expr(in);
-    return new IfExpr(test_part, then_part, else_part);
+    return NEW(IfExpr)(test_part, then_part, else_part);
 }
 
 //Parse a _fun expr
-Expr *parse_fun(std::istream &in) {
-    Expr *lhs, *body;
+PTR(Expr) parse_fun(std::istream &in) {
+    PTR(Expr) lhs;
+    PTR(Expr) body;
     std::string var;
     skip_whitespace(in);
     consume(in, '(');
     skip_whitespace(in);
     lhs = parse_var(in);
-    VarExpr *other_lhs = dynamic_cast<VarExpr*>(lhs);
+    PTR(VarExpr) other_lhs = CAST(VarExpr)(lhs);
     var = other_lhs->getStr();
     skip_whitespace(in);
     consume(in, ')');
     body = parse_expr(in);
-    return new FunExpr(var, body);
+    return NEW(FunExpr)(var, body);
 }
 
 //Parse a _true epxr
-Expr *parse_true(std::istream &in) {
-    return new BoolExpr(true);
+PTR(Expr) parse_true(std::istream &in) {
+    return NEW(BoolExpr)(true);
 }
 
 //Parse a _false expr
-Expr *parse_false(std::istream &in) {
-    return new BoolExpr(false);
+PTR(Expr) parse_false(std::istream &in) {
+    return NEW(BoolExpr)(false);
 }
 
 //Parse keywords
 std::string parse_keyword(std::istream &in) {
-    Expr *kw = parse_var(in);
-    VarExpr *other_e = dynamic_cast<VarExpr*>(kw);
+    PTR(Expr) kw = parse_var(in);
+    PTR(VarExpr) other_e = CAST(VarExpr)(kw);
     std::string var = other_e->getStr();
     if (var == "let" || var == "in") {
         return var;

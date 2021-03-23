@@ -1,5 +1,5 @@
 #Definitions
-INCS = cmdline.h expr.h parse.h val.h
+INCS = cmdline.h expr.h parse.h val.h pointer.h
 SRCS = main.cpp cmdline.cpp expr.cpp parse.cpp tests.cpp val.cpp
 
 #Path to the sub directory
