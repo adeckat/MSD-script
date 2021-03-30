@@ -8,27 +8,28 @@
 #ifndef expr_h
 #define expr_h
 
+#include "pointer.h"
+#include "env.h"
+#include "val.h"
 #include <stdio.h>
 #include <string>
 #include <iostream>
 #include <sstream>
-#include "pointer.h"
 
 class Val;
+class Env;
+
 CLASS(Expr) {
 public:
     //Return true if two expressions are the same, and false otherwise
     virtual bool equals(PTR(Expr) e) = 0;
     
     //Return an int for the value of an expression
-    virtual PTR(Val) interp() = 0;
-    
-    //Return a new expression with the new replaced variable when the original expression contains
-    //a variable matching the string of subst method
-    virtual PTR(Expr) subst(std::string s, PTR(Expr) e) = 0;
+    virtual PTR(Val) interp(PTR(Env) env) = 0;
     
     //Helper function returns a regular string
     std::string to_str();
+    
     //Print method to print the regular expression
     virtual void print(std::ostream& out) = 0;
     
@@ -51,8 +52,7 @@ public:
     int numExpr;
     NumExpr(int numExpr);
     virtual bool equals(PTR(Expr) other);
-    virtual PTR(Val) interp();
-    virtual PTR(Expr) subst(std::string s, PTR(Expr) other);
+    virtual PTR(Val) interp(PTR(Env) env);
     virtual void print(std::ostream& out);
     virtual void pretty_print_at(print_mode_t mode, std::ostream& out, int indentation, int inside);
 };
@@ -63,8 +63,7 @@ public:
     VarExpr(std::string var);
     virtual bool equals(PTR(Expr) other);
     std::string getStr();
-    virtual PTR(Val) interp();
-    virtual PTR(Expr) subst(std::string s, PTR(Expr) other);
+    virtual PTR(Val) interp(PTR(Env) env);
     virtual void print(std::ostream& out);
     virtual void pretty_print_at(print_mode_t mode, std::ostream& out, int indentation, int inside);
 };
@@ -75,8 +74,7 @@ public:
     PTR(Expr) rhs;
     AddExpr(PTR(Expr) lhs, PTR(Expr) rhs);
     virtual bool equals(PTR(Expr) other);
-    virtual PTR(Val) interp();
-    virtual PTR(Expr) subst(std::string s, PTR(Expr) other);
+    virtual PTR(Val) interp(PTR(Env) env);
     virtual void print(std::ostream& out);
     virtual void pretty_print_at(print_mode_t mode, std::ostream& out, int indentation, int inside);
 };
@@ -87,8 +85,7 @@ public:
     PTR(Expr) rhs;
     MultExpr(PTR(Expr) lhs, PTR(Expr) rhs);
     virtual bool equals(PTR(Expr) other);
-    virtual PTR(Val) interp();
-    virtual PTR(Expr) subst(std::string s, PTR(Expr) other);
+    virtual PTR(Val) interp(PTR(Env) env);
     virtual void print(std::ostream& out);
     virtual void pretty_print_at(print_mode_t mode, std::ostream& out, int indentation, int inside);
 };
@@ -100,8 +97,7 @@ public:
     PTR(Expr) body;
     LetExpr(std::string var, PTR(Expr) rhs, PTR(Expr) body);
     virtual bool equals(PTR(Expr) other);
-    virtual PTR(Val) interp();
-    virtual PTR(Expr) subst(std::string s, PTR(Expr) other);
+    virtual PTR(Val) interp(PTR(Env) env);
     virtual void print(std::ostream& out);
     virtual void pretty_print_at(print_mode_t mode, std::ostream& out, int indentation, int inside);
 };
@@ -111,8 +107,7 @@ public:
     bool boolExpr;
     BoolExpr(bool boolExpr);
     virtual bool equals(PTR(Expr) other);
-    virtual PTR(Val) interp();
-    virtual PTR(Expr) subst(std::string s, PTR(Expr) other);
+    virtual PTR(Val) interp(PTR(Env) env);
     virtual void print(std::ostream& out);
     virtual void pretty_print_at(print_mode_t mode, std::ostream& out, int indentation, int inside);
 };
@@ -123,8 +118,7 @@ public:
     PTR(Expr) rhs;
     EqExpr(PTR(Expr) lhs, PTR(Expr) rhs);
     virtual bool equals(PTR(Expr) other);
-    virtual PTR(Val) interp();
-    virtual PTR(Expr) subst(std::string s, PTR(Expr) other);
+    virtual PTR(Val) interp(PTR(Env) env);
     virtual void print(std::ostream& out);
     virtual void pretty_print_at(print_mode_t mode, std::ostream& out, int indentation, int inside);
 };
@@ -136,8 +130,7 @@ public:
     PTR(Expr) else_part;
     IfExpr(PTR(Expr) test_part, PTR(Expr) then_part, PTR(Expr) else_part);
     virtual bool equals(PTR(Expr) other);
-    virtual PTR(Val) interp();
-    virtual PTR(Expr) subst(std::string s, PTR(Expr) other);
+    virtual PTR(Val) interp(PTR(Env) env);
     virtual void print(std::ostream& out);
     virtual void pretty_print_at(print_mode_t mode, std::ostream& out, int indentation, int inside);
 };
@@ -148,8 +141,7 @@ public:
     PTR(Expr) body;
     FunExpr(std::string formal_arg, PTR(Expr) body);
     virtual bool equals(PTR(Expr) other);
-    virtual PTR(Val) interp();
-    virtual PTR(Expr) subst(std::string s, PTR(Expr) other);
+    virtual PTR(Val) interp(PTR(Env) env);
     virtual void print(std::ostream& out);
     virtual void pretty_print_at(print_mode_t mode, std::ostream& out, int indentation, int inside);
 };
@@ -160,8 +152,7 @@ public:
     PTR(Expr) actual_arg;
     CallExpr(PTR(Expr) to_be_called, PTR(Expr) actual_arg);
     virtual bool equals(PTR(Expr) other);
-    virtual PTR(Val) interp();
-    virtual PTR(Expr) subst(std::string s, PTR(Expr) other);
+    virtual PTR(Val) interp(PTR(Env) env);
     virtual void print(std::ostream& out);
     virtual void pretty_print_at(print_mode_t mode, std::ostream& out, int indentation, int inside);
 };

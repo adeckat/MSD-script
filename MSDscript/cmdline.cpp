@@ -10,6 +10,7 @@
 #include "parse.h"
 #include "val.h"
 #include "pointer.h"
+#include "env.h"
 
 
 void use_arguments(int argc, char * argv[]) {
@@ -47,7 +48,7 @@ void use_arguments(int argc, char * argv[]) {
             //Run interp
             if (argv[i] == (std::string)"--interp") {
                 PTR(Expr) n = parse_expr(std::cin);
-                std::cout << n->interp()->to_expr()->to_str();
+                std::cout << n->interp(Env::empty)->to_string();
                 std::cout << "\n";
                 exit(0);
             }

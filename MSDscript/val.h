@@ -8,13 +8,16 @@
 #ifndef val_hpp
 #define val_hpp
 
+#include "pointer.h"
+#include "env.h"
+#include "expr.h"
 #include <stdio.h>
 #include <string>
 #include <iostream>
 #include <sstream>
-#include "pointer.h"
 
 class Expr;
+class Env;
 
 CLASS(Val) {
 public:
@@ -23,9 +26,10 @@ public:
     //Helper function to add and Mult
     virtual PTR(Val) add_to(PTR(Val) other_val) = 0;
     virtual PTR(Val) mult_by(PTR(Val) other_val) = 0;
-    virtual PTR(Expr) to_expr() = 0;
+    std::string to_string();
     virtual bool is_true() = 0;
     virtual PTR(Val) call(PTR(Val) actual_arg) = 0;
+    virtual void print(std::ostream& out) = 0;
 };
 
 class NumVal : public Val {
@@ -35,9 +39,9 @@ public:
     virtual bool equals(PTR(Val) other);
     virtual PTR(Val) add_to(PTR(Val) other_val);
     virtual PTR(Val) mult_by(PTR(Val) other_val);
-    virtual PTR(Expr) to_expr();
     virtual bool is_true();
     virtual PTR(Val) call(PTR(Val) actual_arg);
+    virtual void print(std::ostream& out);
 };
 
 class BoolVal : public Val {
@@ -47,22 +51,23 @@ public:
     virtual bool equals(PTR(Val) other);
     virtual PTR(Val) add_to(PTR(Val) other_val);
     virtual PTR(Val) mult_by(PTR(Val) other_val);
-    virtual PTR(Expr) to_expr();
     virtual bool is_true();
     virtual PTR(Val) call(PTR(Val) actual_arg);
+    virtual void print(std::ostream& out);
 };
 
 class FunVal : public Val {
 public:
     std::string formal_arg;
     PTR(Expr) body;
-    FunVal(std::string formal_arg, PTR(Expr) body);
+    PTR(Env) env;
+    FunVal(std::string formal_arg, PTR(Expr) body, PTR(Env) env); 
     virtual bool equals(PTR(Val) other);
     virtual PTR(Val) add_to(PTR(Val) other_val);
     virtual PTR(Val) mult_by(PTR(Val) other_val);
-    virtual PTR(Expr) to_expr();
     virtual bool is_true();
     virtual PTR(Val) call(PTR(Val) actual_arg);
+    virtual void print(std::ostream& out);
 };
 
 #endif /* val_hpp */

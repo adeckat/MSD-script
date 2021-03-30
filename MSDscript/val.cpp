@@ -6,7 +6,14 @@
 //
 
 #include "val.h"
-#include "expr.h"
+#include <stdexcept>
+#include <stdio.h>
+
+std::string Val::to_string() {
+    std::stringstream out("");
+    this->print(out); 
+    return out.str();
+}
 
 //NumVal and its implement
 NumVal::NumVal(int num) {
@@ -35,14 +42,14 @@ PTR(Val) NumVal::mult_by(PTR(Val) other_val) {
     }
     return NEW(NumVal)(this->numVal * other_num->numVal);
 }
-PTR(Expr) NumVal::to_expr() {
-    return NEW(NumExpr)(this->numVal);
-}
 bool NumVal::is_true() {
     throw std::runtime_error("Not a boolean value error");
 }
 PTR(Val) NumVal::call(PTR(Val) actual_arg) {
     throw std::runtime_error("Not a function to be called error");
+}
+void NumVal::print(std::ostream& out) {
+    out << this->numVal;
 }
 
 //BoolVal and its implement
@@ -64,20 +71,26 @@ PTR(Val) BoolVal::add_to(PTR(Val) other_val) {
 PTR(Val) BoolVal::mult_by(PTR(Val) other_val) {
     throw std::runtime_error("Mult of non-number error");
 }
-PTR(Expr) BoolVal::to_expr() {
-    return NEW(BoolExpr)(this->boolVal);
-}
 bool BoolVal::is_true() {
     return this->boolVal;
 }
 PTR(Val) BoolVal::call(PTR(Val) actual_arg) {
     throw std::runtime_error("Not a function to be called error");
 }
+void BoolVal::print(std::ostream& out) {
+    if (this->boolVal == true) {
+        out << "_true";
+    }
+    else {
+        out << "_false";
+    }
+}
 
 //FunVal and its implement
-FunVal::FunVal(std::string formal_arg, PTR(Expr) body) {
+FunVal::FunVal(std::string formal_arg, PTR(Expr) body, PTR(Env) env) {
     this->formal_arg = formal_arg;
     this->body = body;
+    this->env = env;
 }
 bool FunVal::equals(PTR(Val) other_val) {
     PTR(FunVal) other_fun = CAST(FunVal)(other_val);
@@ -85,7 +98,7 @@ bool FunVal::equals(PTR(Val) other_val) {
         return false;
     }
     else {
-        return (this->formal_arg == other_fun->formal_arg) && (this->body->equals(other_fun->body));
+        return (this->formal_arg == other_fun->formal_arg) && (this->body->equals(other_fun->body)) && (this->env->equals(other_fun->env));  
     }
 }
 PTR(Val) FunVal::add_to(PTR(Val) other_val) {
@@ -94,12 +107,12 @@ PTR(Val) FunVal::add_to(PTR(Val) other_val) {
 PTR(Val) FunVal::mult_by(PTR(Val) other_val) {
     throw std::runtime_error("Mult of non-number error");
 }
-PTR(Expr) FunVal::to_expr() {
-    return NEW(FunExpr)(this->formal_arg, this->body);
-}
 bool FunVal::is_true() {
     throw std::runtime_error("Not a boolean value error");
 }
 PTR(Val) FunVal::call(PTR(Val) actual_arg) {
-    return (this->body->subst(formal_arg, actual_arg->to_expr()))->interp();
+    return this->body->interp(NEW(ExtendedEnv)(formal_arg, actual_arg, env)); 
+}
+void FunVal::print(std::ostream& out) {
+    out << "[function]";
 }

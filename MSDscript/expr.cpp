@@ -6,7 +6,6 @@
 //
 
 #include "expr.h"
-#include "val.h"
 #include <stdexcept>
 #include <stdio.h>
 
@@ -45,12 +44,8 @@ bool NumExpr::equals(PTR(Expr) other) {
     }
 }
 //Interp and return value of a Num expression
-PTR(Val) NumExpr::interp() {
+PTR(Val) NumExpr::interp(PTR(Env) env) {
     return NEW(NumVal)(this->numExpr);
-}
-//Return this because a Num expression does not contain (a) variable(s) to be subst
-PTR(Expr) NumExpr::subst(std::string s, PTR(Expr) other) {
-    return THIS;
 }
 //Print out a Num expression
 void NumExpr::print(std::ostream& out) {
@@ -83,17 +78,8 @@ std::string VarExpr::getStr() {
     return this->var;
 }
 //Interp a Var expression and throw error because variable could not be interp
-PTR(Val) VarExpr::interp() {
-    throw std::runtime_error("Variable(s) exist(s) in this expression");
-}
-//Check if a Var expression contains a specific variable then substitute with a given expression
-PTR(Expr) VarExpr::subst(std::string s, PTR(Expr) other) {
-    if (this->var == s) {
-        return other;
-    }
-    else {
-        return THIS;
-    }
+PTR(Val) VarExpr::interp(PTR(Env) env) {
+    return env->lookup(this->var);
 }
 //Print out a Var expression
 void VarExpr::print(std::ostream& out) {
@@ -123,14 +109,8 @@ bool AddExpr::equals(PTR(Expr) other) {
     }
 }
 //Interp and return value of an Add expression
-PTR(Val) AddExpr::interp() {
-    return (this->lhs->interp()->add_to(this->rhs->interp()));
-}
-//Check if either lhs or rhs of an Add expression contains a specific variable then substitute with a given expression
-PTR(Expr) AddExpr::subst(std::string s, PTR(Expr) other) {
-    PTR(Expr) other_lhs = this->lhs->subst(s, other);
-    PTR(Expr) other_rhs = this->rhs->subst(s, other);
-    return NEW(AddExpr)(other_lhs, other_rhs);
+PTR(Val) AddExpr::interp(PTR(Env) env) {
+    return (this->lhs->interp(env)->add_to(this->rhs->interp(env)));
 }
 //Print out an Add expression
 void AddExpr::print(std::ostream& out) {
@@ -171,14 +151,8 @@ bool MultExpr::equals(PTR(Expr) other) {
     }
 }
 //Interp and return value of a Mult expression
-PTR(Val) MultExpr::interp() {
-    return (this->lhs->interp()->mult_by(this->rhs->interp()));
-}
-//Check if either lhs or rhs of a Mult expression contains a specific variable then substitute with a given expression
-PTR(Expr) MultExpr::subst(std::string s, PTR(Expr) other) {
-    PTR(Expr) other_lhs = this->lhs->subst(s, other);
-    PTR(Expr) other_rhs = this->rhs->subst(s, other);
-    return NEW(MultExpr)(other_lhs, other_rhs);
+PTR(Val) MultExpr::interp(PTR(Env) env) {
+    return (this->lhs->interp(env)->mult_by(this->rhs->interp(env)));
 }
 //Print out a Mult expression
 void MultExpr::print(std::ostream& out) {
@@ -220,16 +194,10 @@ bool LetExpr::equals(PTR(Expr) other) {
     }
 }
 //Interp and return value of a _let expression
-PTR(Val) LetExpr::interp() {
-    PTR(Val) other_rhs = this->rhs->interp();
-    return this->body->subst(var, other_rhs->to_expr())->interp();
-}
-//Check if a _let expression contains a specific variable then substitute rhs and body with a given expression
-PTR(Expr) LetExpr::subst(std::string s, PTR(Expr) other) {
-    if (this->var == s) {
-        return NEW(LetExpr)(s, this->rhs->subst(s, other), this->body);
-    }
-    return NEW(LetExpr)(this->var, this->rhs->subst(s, other), this->body->subst(s, other));
+PTR(Val) LetExpr::interp(PTR(Env) env) {
+    PTR(Val) other_rhs = this->rhs->interp(env);
+    PTR(Env) new_env = NEW(ExtendedEnv)(var, other_rhs, env);
+    return this->body->interp(new_env);
 }
 //Print out a _let expression
 void LetExpr::print(std::ostream& out) {
@@ -274,13 +242,8 @@ bool BoolExpr::equals(PTR(Expr) e) {
 
 }
 //Interp and return value of a Bool expression
-PTR(Val) BoolExpr::interp() {
+PTR(Val) BoolExpr::interp(PTR(Env) env) {
     return NEW(BoolVal)(this->boolExpr);
-}
-//Return this because a Bool expression does not contain (a) variable(s) to be subst
-PTR(Expr) BoolExpr::subst(std::string var, PTR(Expr) e) {
-    return NEW(BoolExpr)(this->boolExpr);
-
 }
 //Print out a Bool expression
 void BoolExpr::print(std::ostream& out) {
@@ -313,14 +276,8 @@ bool EqExpr::equals(PTR(Expr) other) {
     }
 }
 //Interp and return value of an Eq expression
-PTR(Val) EqExpr::interp() {
-    return NEW(BoolVal)((this->lhs->interp()->equals(this->rhs->interp())));
-}
-//Check if either lhs or rhs of an Eq expression contains a specific variable then substitute with a given expression
-PTR(Expr) EqExpr::subst(std::string s, PTR(Expr) other) {
-    PTR(Expr) other_lhs = this->lhs->subst(s, other);
-    PTR(Expr) other_rhs = this->rhs->subst(s, other);
-    return NEW(EqExpr)(other_lhs, other_rhs);
+PTR(Val) EqExpr::interp(PTR(Env) env) {
+    return NEW(BoolVal)((this->lhs->interp(env)->equals(this->rhs->interp(env))));
 }
 //Print out an Eq expression
 void EqExpr::print(std::ostream& out) {
@@ -364,20 +321,13 @@ bool IfExpr::equals(PTR(Expr) e) {
     }
 }
 //Interp and return value of an _if expression
-PTR(Val) IfExpr::interp() {
-    if (this->test_part->interp()->is_true()) {
-        return this->then_part->interp();
+PTR(Val) IfExpr::interp(PTR(Env) env) {
+    if (this->test_part->interp(env)->is_true()) {
+        return this->then_part->interp(env);
     }
     else {
-        return this->else_part->interp();
+        return this->else_part->interp(env);
     }
-}
-//Check if an _if expression contains a specific variable then substitute with a given expression
-PTR(Expr) IfExpr::subst(std::string var, PTR(Expr) e) {
-    PTR(Expr) other_test = this->test_part->subst(var, e);
-    PTR(Expr) other_then = this->then_part->subst(var, e);
-    PTR(Expr) other_else = this->else_part->subst(var, e);
-    return NEW(IfExpr)(other_test, other_then, other_else);
 }
 //Print out an _if expression
 void IfExpr::print(std::ostream& out) {
@@ -429,16 +379,8 @@ bool FunExpr::equals(PTR(Expr) other) {
     }
 }
 //Interp and return value of a _fun expression
-PTR(Val) FunExpr::interp() {
-    return NEW(FunVal)(formal_arg, body);
-}
-//Check if a _fun expression contains a specific variable then substitute rhs and body with a given expression
-PTR(Expr) FunExpr::subst(std::string s, PTR(Expr) other) {
-    if (this->formal_arg == s) {
-        return NEW(FunExpr)(this->formal_arg, this->body);
-    }
-    PTR(Expr) other_body = this->body->subst(s, other);
-    return NEW(FunExpr)(this->formal_arg, other_body);
+PTR(Val) FunExpr::interp(PTR(Env) env) {
+    return NEW(FunVal)(formal_arg, body, env);
 }
 //Print out a _fun expression
 void FunExpr::print(std::ostream& out) {
@@ -480,14 +422,8 @@ bool CallExpr::equals (PTR(Expr) other) {
     }
 }
 //Interp and return value of a Call expression
-PTR(Val) CallExpr::interp() {
-    return to_be_called->interp()->call(actual_arg->interp());
-}
-//Check if either lhs or rhs of a Call expression contains a specific variable then substitute with a given expression
-PTR(Expr) CallExpr::subst(std::string s, PTR(Expr) other) {
-    PTR(Expr) other_to_be_called = this->to_be_called->subst(s, other);
-    PTR(Expr) other_actual_arg = this->actual_arg->subst(s, other);
-    return NEW(CallExpr)(other_to_be_called, other_actual_arg);
+PTR(Val) CallExpr::interp(PTR(Env) env) {
+    return to_be_called->interp(env)->call(actual_arg->interp(env));
 }
 //Print out a Call expression
 void CallExpr::print(std::ostream& out) {
