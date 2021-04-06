@@ -9,12 +9,6 @@
 #include <stdexcept>
 #include <stdio.h>
 
-std::string Val::to_string() {
-    std::stringstream out("");
-    this->print(out); 
-    return out.str();
-}
-
 //NumVal and its implement
 NumVal::NumVal(int num) {
     this->numVal = num;
@@ -48,8 +42,11 @@ bool NumVal::is_true() {
 PTR(Val) NumVal::call(PTR(Val) actual_arg) {
     throw std::runtime_error("Not a function to be called error");
 }
-void NumVal::print(std::ostream& out) {
-    out << this->numVal;
+std::string NumVal::to_string() {
+    return std::to_string(numVal);
+}
+void NumVal::call_step(PTR(Val) actual_arg_val, PTR(Cont) rest) {
+    throw std::runtime_error("NumVal call error");
 }
 
 //BoolVal and its implement
@@ -77,13 +74,16 @@ bool BoolVal::is_true() {
 PTR(Val) BoolVal::call(PTR(Val) actual_arg) {
     throw std::runtime_error("Not a function to be called error");
 }
-void BoolVal::print(std::ostream& out) {
+std::string BoolVal::to_string() {
     if (this->boolVal == true) {
-        out << "_true";
+        return "_true";
     }
     else {
-        out << "_false";
+        return "_false";
     }
+}
+void BoolVal::call_step(PTR(Val) actual_arg_val, PTR(Cont) rest) {
+    throw std::runtime_error("BoolVal call error");
 }
 
 //FunVal and its implement
@@ -113,6 +113,12 @@ bool FunVal::is_true() {
 PTR(Val) FunVal::call(PTR(Val) actual_arg) {
     return this->body->interp(NEW(ExtendedEnv)(formal_arg, actual_arg, env)); 
 }
-void FunVal::print(std::ostream& out) {
-    out << "[function]";
+std::string FunVal::to_string() {
+    return "[function]";
+}
+void FunVal::call_step(PTR(Val) actual_arg_val, PTR(Cont) rest) {
+    Step::mode = Step::interp_mode;
+    Step::expr = body;
+    Step::env = NEW(ExtendedEnv)(formal_arg, actual_arg_val, env);
+    Step::cont = rest;
 }

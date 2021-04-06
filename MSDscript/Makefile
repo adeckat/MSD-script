@@ -1,6 +1,6 @@
 #Definitions
-INCS = cmdline.h expr.h parse.h val.h pointer.h env.h
-SRCS = main.cpp cmdline.cpp expr.cpp parse.cpp tests.cpp val.cpp env.cpp
+INCS = cmdline.h expr.h parse.h val.h pointer.h env.h step.h cont.h
+SRCS = main.cpp cmdline.cpp expr.cpp parse.cpp tests.cpp val.cpp env.cpp step.cpp cont.cpp
 
 #Path to the sub directory
 TESTPATH = ../test_msdscript

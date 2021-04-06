@@ -5,8 +5,8 @@
 //  Created by Nga Huynh on 3/29/21.
 //
 
-#ifndef env_hpp
-#define env_hpp
+#ifndef env_h
+#define env_h
 
 #include "pointer.h"
 #include "val.h"
