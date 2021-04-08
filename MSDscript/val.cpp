@@ -27,14 +27,14 @@ PTR(Val) NumVal::add_to(PTR(Val) other_val) {
     if (other_num == NULL) {
         throw std::runtime_error("Add of non-number error");
     }
-    return NEW(NumVal)(this->numVal + other_num->numVal);
+    return NEW(NumVal)(((unsigned)this->numVal) + ((unsigned)other_num->numVal));
 }
 PTR(Val) NumVal::mult_by(PTR(Val) other_val) {
     PTR(NumVal) other_num = CAST(NumVal)(other_val);
     if (other_num == NULL) {
         throw std::runtime_error("Mult of non-number error");
     }
-    return NEW(NumVal)(this->numVal * other_num->numVal);
+    return NEW(NumVal)(((unsigned)this->numVal) * ((unsigned)other_num->numVal));
 }
 bool NumVal::is_true() {
     throw std::runtime_error("Not a boolean value error");

@@ -11,6 +11,8 @@
 #include "val.h"
 #include "pointer.h"
 #include "env.h"
+#include "step.h"
+#include "cont.h"
 
 TEST_CASE("equals") {
     PTR(NumExpr) val1 = NEW(NumExpr)(17);
@@ -47,7 +49,7 @@ TEST_CASE("equals") {
     CHECK((NEW(LetExpr)("x", val1, NEW(AddExpr)(var1, val2)))->equals(NEW(LetExpr)("x", NEW(NumExpr)(24), NEW(AddExpr)(NEW(VarExpr)("x"), NEW(NumExpr)(24)))) == false);
     CHECK((NEW(LetExpr)("x", val1, NEW(AddExpr)(var1, val2)))->equals(NEW(LetExpr)("x", NEW(NumExpr)(17), NEW(AddExpr)(NEW(VarExpr)("y"), NEW(NumExpr)(24)))) == false);
     
-    CHECK(var1->getStr() == "x");
+    CHECK(var1->getStr() == "x"); 
     CHECK(var2->getStr() == "y");
     
     CHECK((NEW(BoolExpr)(true))->equals(NEW(BoolExpr)(true)) == true);
@@ -86,8 +88,8 @@ TEST_CASE("equals") {
     CHECK((NEW(FunVal)("x", NEW(AddExpr)(var1, val1), Env::empty))->equals(NULL) == false);
     CHECK((NEW(FunVal)("x", NEW(AddExpr)(var1, val1), Env::empty))->equals(NEW(FunVal)("x", NEW(AddExpr)(NEW(VarExpr)("x"), NEW(NumExpr)(17)), Env::empty)) == true);
     
-    CHECK(NEW(EmptyEnv)()->equals(NULL) == false);
-    CHECK(NEW(EmptyEnv)()->equals(Env::empty) == true);
+    CHECK((NEW(EmptyEnv)())->equals(NULL) == false);
+    CHECK((NEW(EmptyEnv)())->equals(Env::empty) == true);
     
     CHECK((NEW(ExtendedEnv)("x", NEW(NumVal)(17), NEW(EmptyEnv)()))->equals(NULL) == false);
     CHECK((NEW(ExtendedEnv)("x", NEW(NumVal)(24), NEW(EmptyEnv)()))->equals(NEW(ExtendedEnv)("x", NEW(NumVal)(24), Env::empty)) == true);
@@ -190,12 +192,29 @@ TEST_CASE("mult_by") {
     CHECK_THROWS_WITH((NEW(FunVal)("x", NEW(AddExpr)(NEW(VarExpr)("x"), NEW(NumExpr)(17)), Env::empty))->mult_by(NEW(NumVal)(17)), "Mult of non-number error");
 }
 
-TEST_CASE("other test cases for Val class") {
-   
+TEST_CASE("interp_by_steps") {
+    CHECK(Step::interp_by_steps(parse_str("1"))->equals(NEW(NumVal)(1)));
+    CHECK_THROWS_WITH(Step::interp_by_steps(parse_str("x")), "Free variable: x");
+    CHECK(Step::interp_by_steps(parse_str("17+24"))->equals(NEW(NumVal)(41)));
+    CHECK(Step::interp_by_steps(parse_str("17*24"))->equals(NEW(NumVal)(408)));
+    CHECK(Step::interp_by_steps(parse_str("(_let x=17 _in (x+24))"))->equals(NEW(NumVal)(41)));
+    CHECK(Step::interp_by_steps(parse_str("_true"))->equals(NEW(BoolVal)(true)));
+    CHECK_THROWS_WITH(Step::interp_by_steps(parse_str("x==17")), "Free variable: x");
+    CHECK(Step::interp_by_steps(parse_str("(1+2)==3"))->equals(NEW(BoolVal)(true)));
+    CHECK_THROWS_WITH(Step::interp_by_steps(parse_str("(_if (x==17) _then 1 _else 0)")), "Free variable: x");
+    CHECK(Step::interp_by_steps(parse_str("(_if ((13+4)==17) _then 1 _else 0)"))->equals(NEW(NumVal)(1)));
+    CHECK(Step::interp_by_steps(parse_str("(_if ((13+5)==17) _then 1 _else 0)"))->equals(NEW(NumVal)(0)));
+    CHECK(Step::interp_by_steps(parse_str("(_fun (x) (x+17))(24)"))->equals(NEW(NumVal)(41)));
+}
+
+TEST_CASE("other test cases") {
     CHECK_THROWS_WITH((NEW(NumVal)(17))->call(NEW(NumVal)(24)), "Not a function to be called error");
     CHECK_THROWS_WITH((NEW(BoolVal)(true))->call(NEW(NumVal)(24)), "Not a function to be called error");
     CHECK((NEW(FunVal)("x", NEW(AddExpr)(NEW(VarExpr)("x"), NEW(NumExpr)(17)), Env::empty))->call(NEW(NumVal)(24))->equals(NEW(NumVal)(41)));
     CHECK((NEW(FunVal)("x", NEW(MultExpr)(NEW(VarExpr)("x"), NEW(NumExpr)(17)), Env::empty))->call(NEW(NumVal)(24))->equals(NEW(NumVal)(408)));
+    CHECK_THROWS_WITH((NEW(NumVal)(17))->call_step(NEW(NumVal)(24), NEW(DoneCont)()), "NumVal call error");
+    CHECK_THROWS_WITH((NEW(BoolVal)(false))->call_step(NEW(NumVal)(24), NEW(DoneCont)()), "BoolVal call error");
+    CHECK_THROWS_WITH((NEW(DoneCont)()->step_continue()), "Can't continue done");
 }
 
 TEST_CASE("print") {
@@ -309,19 +328,19 @@ TEST_CASE("print") {
     
    
     toString = "17";
-    CHECK(NEW(NumVal)(17)->to_string() == toString);
+    CHECK((NEW(NumVal)(17))->to_string() == toString);
     
     toString = "24";
-    CHECK(NEW(NumVal)(24)->to_string() == toString);
+    CHECK((NEW(NumVal)(24))->to_string() == toString);
     
     toString = "_true";
-    CHECK(NEW(BoolVal)(true)->to_string() == toString);
+    CHECK((NEW(BoolVal)(true))->to_string() == toString);
     
     toString = "_false";
-    CHECK(NEW(BoolVal)(false)->to_string() == toString);
+    CHECK((NEW(BoolVal)(false))->to_string() == toString);
     
     toString = "[function]";
-    CHECK(NEW(FunVal)("x", NEW(AddExpr)(var1, val1), Env::empty)->to_string() == toString);
+    CHECK((NEW(FunVal)("x", NEW(AddExpr)(var1, val1), Env::empty))->to_string() == toString);
 }
 
 TEST_CASE("pretty_print") {

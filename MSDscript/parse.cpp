@@ -136,7 +136,7 @@ PTR(Expr) parse_num(std::istream &in) {
         int c = in.peek();
         if (isdigit(c)) {
             consume(in, c);
-            n = n * 10 + (c - '0');
+            n = (unsigned) n * 10 + (c - '0');
         }
         else if (c == '-' || isalpha(c)) {
             throw std::runtime_error("Invalid input");

@@ -5,8 +5,8 @@
 //  Created by Nga Huynh on 2/14/21.
 //
 
-#ifndef parse_hpp
-#define parse_hpp
+#ifndef parse_h
+#define parse_h
 
 #include "expr.h"
 #include "pointer.h"

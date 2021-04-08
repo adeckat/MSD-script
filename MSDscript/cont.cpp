@@ -14,7 +14,7 @@ PTR(Cont) Cont::done = NEW(DoneCont)();
 DoneCont::DoneCont() { }
 
 void DoneCont::step_continue() {
-    throw std::runtime_error("can't continue done");
+    throw std::runtime_error("Can't continue done");
 }
  
 RightThenAddCont::RightThenAddCont(PTR(Expr) rhs, PTR(Env) env, PTR(Cont) rest) {

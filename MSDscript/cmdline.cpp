@@ -65,7 +65,7 @@ void use_arguments(int argc, char * argv[]) {
                 std::cout << "\n";
                 exit(0);
             }
-//            Run print
+            //Run print
             if (argv[i] == (std::string)"--print") {
                 PTR(Expr) n = parse_expr(std::cin);
                 n->print(std::cout);
