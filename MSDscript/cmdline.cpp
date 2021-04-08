@@ -14,7 +14,7 @@
 #include "step.h"
 #include "cont.h"
 #include "expr.h"
-
+#include <ctype.h>
 
 void use_arguments(int argc, char * argv[]) {
     if (argc == 1) {
@@ -27,6 +27,7 @@ void use_arguments(int argc, char * argv[]) {
                 std::cout << "These arguments are allowed to use:\n";
                 std::cout << "\t--help: list of available argument\n";
                 std::cout << "\t--test: run tests\n";
+                std::cout << "\t--interp: run interp function to profuce a result of the standard input expression\n";
                 std::cout << "\t--step: run interp function to profuce a result of the standard input expression\n";
                 std::cout << "\t--print: print the standard input expression in a regular way\n";
                 std::cout << "\t--pretty-print: print the standard input expression in a pretty way\n";
@@ -49,12 +50,13 @@ void use_arguments(int argc, char * argv[]) {
                 }
             }
             //Run interp
-//            if (argv[i] == (std::string)"--interp") {
-//                PTR(Expr) n = parse_expr(std::cin);
-//                std::cout << n->interp(Env::empty)->to_string();
-//                std::cout << "\n";
-//                exit(0);
-//            }
+            if (argv[i] == (std::string)"--interp") {
+                PTR(Expr) n = parse_expr(std::cin);
+//                PTR(Expr) n = parse_str(argv[2]);
+                std::cout << n->interp(Env::empty)->to_string();
+                std::cout << "\n";
+                exit(0);
+            }
             //Run step
             if (argv[i] == (std::string)"--step") {
                 PTR(Expr) n = parse_expr(std::cin);
